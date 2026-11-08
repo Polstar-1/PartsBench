@@ -31,6 +31,7 @@ export default function Icon({ name, size = 22 }) {
     case "tag": return (<svg {...c}><path d="M3 12V4h8l10 10-8 8z" /><circle cx="7.5" cy="8.5" r="1.3" /></svg>);
     case "chat": return (<svg {...c}><path d="M4 5h16v11H9l-5 4z" /><line x1="8" y1="9" x2="16" y2="9" /><line x1="8" y1="12" x2="13" y2="12" /></svg>);
     case "check": return (<svg {...c}><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>);
+    case "cog": return (<svg {...c}><circle cx="12" cy="12" r="7.2" /><circle cx="12" cy="12" r="2.8" /><g strokeWidth="2.6"><line x1="19.2" y1="12" x2="21.6" y2="12" /><line x1="17.09" y1="17.09" x2="18.79" y2="18.79" /><line x1="12" y1="19.2" x2="12" y2="21.6" /><line x1="6.91" y1="17.09" x2="5.21" y2="18.79" /><line x1="4.8" y1="12" x2="2.4" y2="12" /><line x1="6.91" y1="6.91" x2="5.21" y2="5.21" /><line x1="12" y1="4.8" x2="12" y2="2.4" /><line x1="17.09" y1="6.91" x2="18.79" y2="5.21" /></g></svg>);
     default: return (<svg {...c}><circle cx="12" cy="12" r="8" /></svg>);
   }
 }

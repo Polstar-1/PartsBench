@@ -6,6 +6,8 @@ import Garage from "./screens/Garage";
 import Maintain from "./screens/Maintain";
 import Shop from "./screens/Shop";
 import Ask from "./screens/Ask";
+import Settings from "./screens/Settings";
+import useAuth from "./useAuth";
 import { loadGarage, saveGarage, newId } from "./storage";
 
 const TABS = [
@@ -20,6 +22,7 @@ export default function App() {
   const [tab, setTab] = useState("identify");
   const [garage, setGarage] = useState(loadGarage);
   const [draft, setDraft] = useState(null); // a looked-up vehicle that isn't saved yet
+  const auth = useAuth();
 
   useEffect(() => { saveGarage(garage); }, [garage]);
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
@@ -57,7 +60,12 @@ export default function App() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <div className="brand"><span className="brand-mark" />PARTSBENCH</div>
+        <div className="brand">
+          <button className={"cog-btn" + (tab === "settings" ? " active" : "")} aria-label="Settings" aria-current={tab === "settings" ? "page" : undefined} onClick={() => setTab("settings")}>
+            <Icon name="cog" size={22} />
+          </button>
+          PARTSBENCH
+        </div>
         <div className="topbar-sub">{active ? [active.year, active.make].filter(Boolean).join(" ") : "No vehicle yet"}</div>
       </header>
 
@@ -79,6 +87,7 @@ export default function App() {
         )}
         {tab === "shop" && <Shop vehicle={active} goIdentify={() => setTab("identify")} />}
         {tab === "ask" && <Ask vehicle={active} />}
+        {tab === "settings" && <Settings auth={auth} />}
       </main>
 
       <nav className="tabbar" aria-label="Main">
