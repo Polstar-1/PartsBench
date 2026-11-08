@@ -5,6 +5,7 @@ export default function Ask({ vehicle }) {
       <h1 className="page-title">Ask about a problem.</h1>
       <p className="page-sub">Coming soon. Describe what's wrong with your {vehicle ? vehicle.year + " " + vehicle.make + " " + vehicle.model : "vehicle"} and get a plain-English answer.</p>
 
+      <div className="ask-grid">
       <div className="panel">
         <label htmlFor="ask">What's going on?</label>
         <textarea id="ask" rows={4} disabled placeholder="e.g. Rough idle when cold, check engine light, P0301…" />
@@ -19,6 +20,7 @@ export default function Ask({ vehicle }) {
           <li><strong>How to prevent it.</strong> What to do differently so it doesn't repeat.</li>
           <li><strong>The part to buy.</strong> The right replacement, with links.</li>
         </ol>
+      </div>
       </div>
     </>
   );

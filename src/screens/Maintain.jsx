@@ -204,6 +204,8 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, save
       <h1 className="page-title">{name}</h1>
       <p className="page-sub">Tap an item to log a service or change its interval.</p>
 
+      <div className="maint-layout">
+        <aside className="maint-side">
       <div className="panel">
         <label htmlFor="odo2">Current mileage</label>
         <div className="row">
@@ -222,6 +224,11 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, save
         <span className="chip chip-quiet">{unlogged} not logged</span>
       </div>
 
+      <p className="info-note">
+        These are common starting intervals, not a factory schedule for your exact engine. Your owner's manual always wins. Edit any interval to match it.
+      </p>
+        </aside>
+        <div className="maint-list">
       {rows.map(({ it }) => (
         <Row key={it.key} item={it} vehicle={vehicle}
           open={openKey === it.key} mode={mode}
@@ -229,9 +236,8 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, save
           onLog={logService} onDeleteEntry={deleteEntry} onSetInterval={setInterval_} />
       ))}
 
-      <p className="info-note">
-        These are common starting intervals, not a factory schedule for your exact engine. Your owner's manual always wins. Edit any interval to match it.
-      </p>
+        </div>
+      </div>
     </>
   );
 }

@@ -5,17 +5,17 @@
    ============================================================ */
 
 const ITEMS = [
-  { key: "oil", label: "Engine oil & filter", miles: 5000, months: 6, note: "Use the oil grade and spec in your owner's manual. Some engines allow longer." },
+  { key: "oil", label: "Engine oil & filter", miles: 5000, months: 6, noEv: true, note: "Use the oil grade and spec in your owner's manual. Some engines allow longer." },
   { key: "rotate", label: "Tire rotation", miles: 7500, months: 6, note: "Also a good time to check tread depth and pressures." },
   { key: "brake-inspect", label: "Brake inspection", miles: 12000, months: 12, note: "Pads, rotors, lines and fluid level." },
   { key: "cabin-air", label: "Cabin air filter", miles: 15000, months: 12, note: "Sooner if the airflow smells musty or feels weak." },
-  { key: "engine-air", label: "Engine air filter", miles: 20000, months: 24, note: "Sooner on dusty or gravel roads." },
+  { key: "engine-air", label: "Engine air filter", miles: 20000, months: 24, noEv: true, note: "Sooner on dusty or gravel roads." },
   { key: "wipers", label: "Wiper blades", miles: null, months: 12 },
-  { key: "battery", label: "Battery test", miles: null, months: 36, note: "Most batteries last 3 to 5 years. Test before winter." },
+  { key: "battery", label: "12V battery test", miles: null, months: 36, note: "Most 12V batteries last 3 to 5 years. Test before winter." },
   { key: "brake-fluid", label: "Brake fluid flush", miles: 30000, months: 24, note: "Brake fluid absorbs moisture over time." },
   { key: "plugs", label: "Spark plugs", miles: 60000, months: null, gas: true, note: "Iridium or platinum plugs often go 100,000 miles. Check the manual." },
   { key: "trans", label: "Transmission fluid", miles: 60000, months: null, noEv: true, note: "Interval varies a lot by transmission. Check the manual." },
-  { key: "coolant", label: "Coolant flush", miles: 60000, months: 60, note: "Some long-life coolants go 100,000+ miles." },
+  { key: "coolant", label: "Coolant flush", miles: 60000, months: 60, noEv: true, note: "Some long-life coolants go 100,000+ miles." },
   { key: "diff", label: "Differential / transfer case fluid", miles: 40000, months: null, awd: true },
   { key: "serp", label: "Serpentine belt", miles: 90000, months: null, noEv: true, note: "Inspect for cracks at every oil change." },
   { key: "timing", label: "Timing belt (if equipped)", miles: 90000, months: 84, noEv: true, note: "Skip if your engine has a timing chain. Check the manual." },

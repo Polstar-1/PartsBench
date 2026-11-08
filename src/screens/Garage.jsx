@@ -122,10 +122,12 @@ export default function Garage({ vehicles, activeId, onSelect, onUpdate, onRemov
         </div>
       )}
 
-      {vehicles.map((v) => (
-        <VehicleCard key={v.id} v={v} isActive={v.id === activeId}
-          onSelect={onSelect} onUpdate={onUpdate} onRemove={onRemove} goMaintain={goMaintain} goShop={goShop} />
-      ))}
+      <div className="vgrid">
+        {vehicles.map((v) => (
+          <VehicleCard key={v.id} v={v} isActive={v.id === activeId}
+            onSelect={onSelect} onUpdate={onUpdate} onRemove={onRemove} goMaintain={goMaintain} goShop={goShop} />
+        ))}
+      </div>
 
       {vehicles.length > 0 && (
         <button className="btn-secondary block-btn" onClick={goIdentify}>+ Add another vehicle</button>

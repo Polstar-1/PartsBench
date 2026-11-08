@@ -9,18 +9,60 @@ const SCAN_MESSAGES = [
   "Finalizing specification…",
 ];
 
-function Wheel({ cx, cy, r }) {
-  const spokes = [0, 72, 144, 216, 288];
+function Wheel({ cx, cy, r, style }) {
+  const rad = (deg) => (deg * Math.PI) / 180;
+  const pt = (rr, deg) => [cx + rr * Math.sin(rad(deg)), cy - rr * Math.cos(rad(deg))];
+  const aero = style === "aero";
+  const truck = style === "truck";
+  const n = truck ? 6 : 5;
+  const step = 360 / n;
+
+  const spokes = [];
+  if (!aero) {
+    for (let i = 0; i < n; i++) {
+      const base = i * step;
+      // twin spokes: two thin lines per arm, slightly apart
+      [-5, 5].forEach((off) => {
+        const [x1, y1] = pt(r * 0.2, base + off * 1.6);
+        const [x2, y2] = pt(r * 0.66, base + off);
+        spokes.push(<line key={"s" + i + off} x1={x1} y1={y1} x2={x2} y2={y2} className="spoke" />);
+      });
+    }
+  } else {
+    // aero cover: short radial slits near the rim
+    for (let i = 0; i < 10; i++) {
+      const [x1, y1] = pt(r * 0.46, i * 36);
+      const [x2, y2] = pt(r * 0.64, i * 36);
+      spokes.push(<line key={"a" + i} x1={x1} y1={y1} x2={x2} y2={y2} className="spoke" />);
+    }
+  }
+
+  const lugs = [];
+  for (let i = 0; i < n; i++) {
+    const [x, y] = pt(r * 0.2, i * step + step / 2);
+    lugs.push(<circle key={"l" + i} cx={x} cy={y} r={r * 0.04} className="lug" />);
+  }
+
+  // brake caliper: a short thick arc behind the spokes, upper rear
+  const [cx1, cy1] = pt(r * 0.52, 250);
+  const [cx2, cy2] = pt(r * 0.52, 300);
+
   return (
     <g className="wheel">
       <circle cx={cx} cy={cy} r={r} className="tire" />
-      <circle cx={cx} cy={cy} r={r * 0.66} className="rim" />
+      <circle cx={cx} cy={cy} r={r * 0.86} className="fine" />
+      <circle cx={cx} cy={cy} r={r * 0.7} className="rim" />
+      {aero ? <circle cx={cx} cy={cy} r={r * 0.66} className="fine" /> : (
+        <>
+          <circle cx={cx} cy={cy} r={r * 0.54} className="disc" />
+          <path d={"M" + cx1 + " " + cy1 + "A" + r * 0.52 + " " + r * 0.52 + " 0 0 1 " + cx2 + " " + cy2} className="caliper" />
+        </>
+      )}
       <g className="spokes" style={{ transformOrigin: cx + "px " + cy + "px" }}>
-        {spokes.map((deg) => (
-          <line key={deg} x1={cx} y1={cy} x2={cx} y2={cy - r * 0.62} transform={"rotate(" + deg + " " + cx + " " + cy + ")"} />
-        ))}
+        {spokes}
+        {!aero && lugs}
       </g>
-      <circle cx={cx} cy={cy} r={r * 0.14} className="hub" />
+      <circle cx={cx} cy={cy} r={r * 0.11} className="hub" />
     </g>
   );
 }
@@ -30,7 +72,9 @@ function VehicleShape({ v }) {
     <>
       <path d={v.body} className="body" />
       {v.glass.map((d, i) => <path key={"g" + i} d={d} className="glass" />)}
+      {v.fine.map((d, i) => <path key={"f" + i} d={d} className="fine" />)}
       {v.lines.map((d, i) => <path key={"l" + i} d={d} className="line" />)}
+      {v.mirror && <path d={v.mirror} className="light" />}
       {v.lights.map((d, i) => <path key={"t" + i} d={d} className="light" />)}
       {v.wheels.map((w, i) => <Wheel key={"w" + i} {...w} />)}
     </>
@@ -75,7 +119,8 @@ export default function VehicleStage({ phase, target, onLanded, caption }) {
     if (phase === "land") {
       const t = Math.max(0, ORDER.indexOf(target || "sedan"));
       const base = idxRef.current;
-      const steps = ((t - base + n) % n) + n; // at least one more full lap
+      let steps = (t - base + n) % n;
+      if (steps < 6) steps += n; // always show a decent run before settling
       const timers = [];
       let at = 0;
       for (let i = 0; i < steps; i++) {
