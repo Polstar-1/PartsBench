@@ -1,10 +1,11 @@
 // Vercel serverless function: searches eBay for a part and returns clean, sortable results.
 // The eBay keys live ONLY in Vercel's environment variables (never in the app code):
 //   EBAY_CLIENT_ID, EBAY_CLIENT_SECRET   (required)
-//   EBAY_CAMPAIGN_ID                     (optional, from eBay Partner Network, makes links earn commission)
+//   EBAY_CAMPAIGN_ID                     (optional override; defaults to the campaign ID below, which is public)
 //   EBAY_PARTS_CATEGORY                  (optional, defaults to 6030 "Car & Truck Parts & Accessories")
 // With no keys set it answers { configured: false } and the app falls back to plain store links.
 
+const DEFAULT_CAMPAIGN = "5339243534";
 const TOKEN_URL = "https://api.ebay.com/identity/v1/oauth2/token";
 const SEARCH_URL = "https://api.ebay.com/buy/browse/v1/item_summary/search";
 
@@ -65,7 +66,7 @@ async function getToken(id, secret) {
 async function search(token, env, params) {
   const url = SEARCH_URL + "?" + params.toString();
   const headers = { Authorization: "Bearer " + token, "X-EBAY-C-MARKETPLACE-ID": "EBAY_MOTORS_US", Accept: "application/json" };
-  if (env.EBAY_CAMPAIGN_ID) headers["X-EBAY-C-ENDUSERCTX"] = "affiliateCampaignId=" + env.EBAY_CAMPAIGN_ID;
+  headers["X-EBAY-C-ENDUSERCTX"] = "affiliateCampaignId=" + (env.EBAY_CAMPAIGN_ID || DEFAULT_CAMPAIGN);
   const res = await fetch(url, { headers });
   const body = await res.json().catch(() => ({}));
   return { ok: res.ok, status: res.status, body };

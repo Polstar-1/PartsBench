@@ -1,8 +1,8 @@
-// Paste your affiliate IDs here once you're approved. Empty = plain links.
+// Your affiliate IDs. Empty = plain links. These are public (they appear in every link).
 // Amazon Associates: your store tag, e.g. "partsbench-20"
 // eBay Partner Network: your campaign ID. Generate one sample link in EPN and
 // compare it with the parameters below to confirm they match.
-export const AFFILIATE = { amazonTag: "", ebayCampId: "" };
+export const AFFILIATE = { amazonTag: "", ebayCampId: "5339243534" };
 
 export const RETAILER_COLORS = {
   "eBay Motors": "#5b8dbe",

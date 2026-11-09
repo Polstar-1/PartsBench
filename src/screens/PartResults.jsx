@@ -89,7 +89,6 @@ export default function PartResults({ vehicle, terms, query, sort, setSort, cond
         <summary>Also check these stores</summary>
         <LinkDrawer query={query} />
       </details>
-      {live && <p className="pdisclose">Links to eBay and other stores are affiliate links. We may earn a commission when you buy, at no extra cost to you.</p>}
     </div>
   );
 }
