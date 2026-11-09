@@ -23,17 +23,19 @@ export default async function handler(req, res) {
 
   const header = String(req.headers.authorization || "");
   const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
-  if (!token) return res.status(401).json({ error: "Please sign in again, then try once more." });
+  if (!token) return res.status(401).json({ code: "no-token", error: "Please sign in again, then try once more." });
 
   // Find out who is asking. Only that person's own account can be deleted.
   let user = null;
+  let whoStatus;
   try {
     const who = await fetch(BASE + "/auth/v1/user", { headers: { apikey: PUBLIC_KEY, Authorization: "Bearer " + token } });
+    whoStatus = who.status;
     if (who.ok) user = await who.json();
   } catch {
-    return res.status(502).json({ error: "Couldn't reach the account service. Try again." });
+    return res.status(502).json({ code: "who-network", error: "Couldn't reach the account service. Try again." });
   }
-  if (!user || !user.id) return res.status(401).json({ error: "Please sign in again, then try once more." });
+  if (!user || !user.id) return res.status(401).json({ code: "who-" + whoStatus, error: "Please sign in again, then try once more." });
 
   const headers = { apikey: secret, "content-type": "application/json" };
   if (secret.startsWith("eyJ")) headers.Authorization = "Bearer " + secret; // older-style keys also go here
@@ -43,9 +45,9 @@ export default async function handler(req, res) {
       headers,
       body: JSON.stringify({ should_soft_delete: false }),
     });
-    if (!del.ok) return res.status(502).json({ error: "The account couldn't be deleted. Nothing was changed. Try again." });
+    if (!del.ok) return res.status(502).json({ code: "delete-" + del.status, error: "The account couldn't be deleted. Nothing was changed. Try again." });
   } catch {
-    return res.status(502).json({ error: "Couldn't reach the account service. Try again." });
+    return res.status(502).json({ code: "delete-network", error: "Couldn't reach the account service. Try again." });
   }
   return res.status(200).json({ ok: true });
 }

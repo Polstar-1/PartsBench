@@ -87,7 +87,7 @@ export default function useAuth() {
     let body = {};
     try { body = await res.json(); } catch { /* not JSON: handled below */ }
     if (res.status === 404) return { error: "Account deletion isn't available here yet." };
-    if (!res.ok) return { error: body.error || "The account couldn't be deleted. Try again." };
+    if (!res.ok) return { error: (body.error || "The account couldn't be deleted. Try again.") + (body.code ? " (code: " + body.code + ")" : "") };
     if (body.ok !== true) return { error: "Account deletion isn't available here yet." }; // e.g. a page came back instead of our server
     await supabase.auth.signOut({ scope: "local" }); // the account is gone, so just clear this device's login
     return OK;
