@@ -37,6 +37,15 @@ export default function App() {
       setDraft(null);
       return r;
     },
+    // Deleting removes the account and its saved Garage. This device is emptied too.
+    deleteAccount: async () => {
+      const r = await auth.deleteAccount();
+      if (!r.error) {
+        sync.clearLocal();
+        setDraft(null);
+      }
+      return r;
+    },
   };
 
   useEffect(() => { saveGarage(garage); }, [garage]);

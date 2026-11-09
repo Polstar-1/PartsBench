@@ -72,6 +72,27 @@ export default function useAuth() {
     return error ? { error: friendly(error) } : OK;
   }
 
+  // Asks our own server to delete the account (it needs a secret key the app doesn't hold).
+  async function deleteAccount() {
+    if (!configured) return NOT_SET;
+    const { data } = await supabase.auth.getSession();
+    const token = data.session ? data.session.access_token : "";
+    if (!token) return { error: "Please sign in again, then try once more." };
+    let res;
+    try {
+      res = await fetch("/api/delete-account", { method: "POST", headers: { Authorization: "Bearer " + token } });
+    } catch {
+      return { error: "Couldn't reach the server. Check your connection and try again." };
+    }
+    let body = {};
+    try { body = await res.json(); } catch { /* not JSON: handled below */ }
+    if (res.status === 404) return { error: "Account deletion isn't available here yet." };
+    if (!res.ok) return { error: body.error || "The account couldn't be deleted. Try again." };
+    if (body.ok !== true) return { error: "Account deletion isn't available here yet." }; // e.g. a page came back instead of our server
+    await supabase.auth.signOut({ scope: "local" }); // the account is gone, so just clear this device's login
+    return OK;
+  }
+
   async function signOut() {
     if (!configured) return OK;
     await supabase.auth.signOut();
@@ -81,6 +102,6 @@ export default function useAuth() {
   return {
     configured, ready, user,
     name: user && user.user_metadata ? user.user_metadata.username || "" : "",
-    sendCode, verifyCode, saveName, startEmailChange, confirmEmailChange, signOut,
+    sendCode, verifyCode, saveName, startEmailChange, confirmEmailChange, deleteAccount, signOut,
   };
 }

@@ -52,6 +52,8 @@ select:disabled, input:disabled, textarea:disabled{ opacity:0.4; }
 .btn-primary.block{ width:100%; }
 .btn-secondary{ background:transparent; border:1px solid var(--border); color:var(--ink); font-size:13px; padding:10px 16px; border-radius:6px; cursor:pointer; white-space:nowrap; }
 .btn-secondary:hover{ border-color:var(--blue); }
+.btn-danger{ background:var(--red); color:#fff; border:none; font-family:var(--font-display); font-weight:600; font-size:12.5px; letter-spacing:0.03em; text-transform:uppercase; padding:0 18px; border-radius:6px; cursor:pointer; min-height:41px; white-space:nowrap; }
+.btn-danger:disabled{ background:var(--ink-faint); color:#2b2f36; cursor:not-allowed; }
 .block-btn{ width:100%; }
 .btn-small{ background:var(--panel-2); border:1px solid var(--border); color:var(--ink); font-size:12px; padding:7px 11px; border-radius:6px; cursor:pointer; }
 .btn-small:hover{ border-color:var(--orange); }

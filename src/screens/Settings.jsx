@@ -177,6 +177,52 @@ function ChangeEmail({ auth }) {
   );
 }
 
+function DeleteAccount({ auth }) {
+  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const email = auth.user.email || "";
+  const matches = typed.trim().toLowerCase() === email.toLowerCase();
+
+  function close() { setOpen(false); setTyped(""); setErr(""); }
+
+  async function remove() {
+    setBusy(true); setErr("");
+    const r = await auth.deleteAccount();
+    setBusy(false);
+    if (r.error) setErr(r.error);
+    // On success the person is signed out and this page switches to the sign-in form.
+  }
+
+  return (
+    <div className="panel">
+      <p className="section-title" style={{ marginBottom: 6 }}>Delete account</p>
+      {!open && (
+        <>
+          <p className="settings-hint" style={{ marginBottom: 14 }}>Permanently removes your account and the Garage saved to it.</p>
+          <button className="btn-secondary" onClick={() => setOpen(true)}>Delete my account</button>
+        </>
+      )}
+      {open && (
+        <form onSubmit={(e) => { e.preventDefault(); if (matches && !busy) remove(); }}>
+          <p className="settings-hint" style={{ marginTop: 0 }}>
+            This can't be undone. Your account, your saved vehicles and your maintenance logs will be deleted from every device.
+          </p>
+          <label htmlFor="del-email">Type <strong>{email}</strong> to confirm</label>
+          <input id="del-email" type="email" autoComplete="off" autoCapitalize="off" spellCheck="false"
+            value={typed} onChange={(e) => setTyped(e.target.value)} autoFocus />
+          <div className="settings-row">
+            <button type="submit" className="btn-danger" disabled={!matches || busy}>{busy ? "Deleting…" : "Delete forever"}</button>
+            <button type="button" className="btn-secondary" onClick={close} disabled={busy}>Cancel</button>
+          </div>
+        </form>
+      )}
+      {err && <p className="error-note" role="alert">{err}</p>}
+    </div>
+  );
+}
+
 export default function Settings({ auth, sync }) {
   return (
     <>
@@ -215,6 +261,7 @@ export default function Settings({ auth, sync }) {
               </p>
               <button className="btn-secondary" onClick={() => auth.signOut()}>Sign out</button>
             </div>
+            <DeleteAccount auth={auth} />
           </>
         )}
       </div>
