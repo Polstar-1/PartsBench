@@ -35,20 +35,20 @@ function ResultCard({ item }) {
   );
 }
 
-export default function PartResults({ vehicle, terms, query, sort, setSort, cond, setCond }) {
+export default function PartResults({ vehicle, terms, query, trim, sort, setSort, cond, setCond }) {
   const [state, setState] = useState(null); // { key, data, error }
-  const key = partsKey({ terms, vehicle, sort, cond });
+  const key = partsKey({ terms, vehicle, sort, cond, trim });
   const loading = !state || state.key !== key;
   const data = !loading ? state.data : null;
   const live = data && data.configured !== false;
 
   useEffect(() => {
     const ctl = new AbortController();
-    searchParts({ terms, vehicle, sort, cond, signal: ctl.signal })
+    searchParts({ terms, vehicle, sort, cond, trim, signal: ctl.signal })
       .then((d) => setState({ key, data: d, error: "" }))
       .catch((e) => { if (e.name !== "AbortError") setState({ key, data: null, error: e.message || "Search failed" }); });
     return () => ctl.abort();
-  }, [key, terms, vehicle, sort, cond]);
+  }, [key, terms, vehicle, sort, cond, trim]);
 
   // Store links only (no eBay data available): same as before.
   if (!loading && !state.error && !live) return <LinkDrawer query={query} />;
@@ -78,7 +78,7 @@ export default function PartResults({ vehicle, terms, query, sort, setSort, cond
         <>
           <p className="pnote">
             {items.length
-              ? (data.fitment === "verified" ? "Listings eBay says fit your " : "Matched by keyword for your ") + [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ") + (data.fitment === "verified" ? "." : ". Double-check fit before you buy.")
+              ? (data.fitment === "verified" ? "Listings eBay says fit your " : "Matched by keyword for your ") + [vehicle.year, vehicle.make, vehicle.model, data.trim].filter(Boolean).join(" ") + (data.fitment === "verified" ? "." : ". Double-check fit before you buy.")
               : "No eBay listings found for this one" + (cond !== "any" ? " in that condition. Try “All”" : "") + ". Try the stores below."}
           </p>
           <div className="pgrid">{items.map((it) => <ResultCard key={it.id} item={it} />)}</div>

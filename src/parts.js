@@ -15,15 +15,15 @@ export const CONDITIONS = [
 
 const cache = new Map();
 
-export function partsKey({ terms, vehicle, sort, cond }) {
-  return [terms, vehicle.year, vehicle.make, vehicle.model, sort, cond].join("|");
+export function partsKey({ terms, vehicle, sort, cond, trim }) {
+  return [terms, vehicle.year, vehicle.make, vehicle.model, trim || "", sort, cond].join("|");
 }
 
 // Resolves to { configured, fitment, items, total } or throws on a real failure.
-export async function searchParts({ terms, vehicle, sort, cond, signal }) {
-  const key = partsKey({ terms, vehicle, sort, cond });
+export async function searchParts({ terms, vehicle, sort, cond, trim, signal }) {
+  const key = partsKey({ terms, vehicle, sort, cond, trim });
   if (cache.has(key)) return cache.get(key);
-  const p = new URLSearchParams({ q: terms, year: vehicle.year || "", make: vehicle.make || "", model: vehicle.model || "", sort, cond });
+  const p = new URLSearchParams({ q: terms, year: vehicle.year || "", make: vehicle.make || "", model: vehicle.model || "", trim: trim || "", sort, cond });
   const res = await fetch("/api/parts?" + p.toString(), { signal });
   // Local dev server and old deployments have no /api: treat that like "not set up yet".
   const type = res.headers.get("content-type") || "";

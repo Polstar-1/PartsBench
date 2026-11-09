@@ -370,3 +370,6 @@ select:disabled, input:disabled, textarea:disabled{ opacity:0.4; }
   .pcard-img{ width:104px; height:104px; }
 }
 @media (prefers-reduced-motion:reduce){ .pcard-skel{ animation:none; } .pcard:hover{ transform:none; } }
+
+.trim-toggle{ display:flex; align-items:center; gap:10px; margin:0 0 12px; text-transform:none; letter-spacing:0; font-family:var(--font-body); font-size:13px; color:var(--ink-dim); cursor:pointer; }
+.trim-toggle input{ width:18px; height:18px; padding:0; accent-color:var(--orange); flex-shrink:0; }

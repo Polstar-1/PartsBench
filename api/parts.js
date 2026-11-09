@@ -85,6 +85,7 @@ export default async function handler(req, res) {
   const year = /^\d{4}$/.test(url.searchParams.get("year") || "") ? url.searchParams.get("year") : "";
   const make = clean(url.searchParams.get("make"), 40);
   const model = clean(url.searchParams.get("model"), 40);
+  const trim = clean(url.searchParams.get("trim"), 40);
   const sort = SORTS[url.searchParams.get("sort")] !== undefined ? url.searchParams.get("sort") : "best";
   const cond = COND_IDS[url.searchParams.get("cond")] ? url.searchParams.get("cond") : "any";
   if (q.length < 2) { res.statusCode = 400; return res.end(JSON.stringify({ error: "Missing part name" })); }
@@ -99,31 +100,41 @@ export default async function handler(req, res) {
 
   try {
     const token = await getToken(env.EBAY_CLIENT_ID, env.EBAY_CLIENT_SECRET);
-    let out = null;
+    const category = env.EBAY_PARTS_CATEGORY || "6030";
 
-    // 1) Best case: eBay's own "fits this vehicle" filter.
+    // Try the most exact search first, then loosen: fits-your-trim, fits-your-model, plain keywords.
+    const attempts = [];
     if (year && make && model) {
-      const p = base();
-      p.set("q", q);
-      p.set("category_ids", env.EBAY_PARTS_CATEGORY || "6030");
-      p.set("compatibility_filter", "Year:" + year + ";Make:" + make + ";Model:" + model);
-      const r = await search(token, env, p);
-      if (r.ok && r.body.itemSummaries && r.body.itemSummaries.length) out = { fitment: "verified", body: r.body };
+      if (trim) attempts.push({ fitment: "verified", compat: true, withTrim: true });
+      attempts.push({ fitment: "verified", compat: true, withTrim: false });
     }
-    // 2) Fallback: plain keyword search with the vehicle in the words.
-    if (!out) {
+    attempts.push({ fitment: "keyword", compat: false, withTrim: Boolean(trim) });
+    if (trim) attempts.push({ fitment: "keyword", compat: false, withTrim: false });
+
+    let out = null;
+    let lastFailure = null;
+    let anyOk = false;
+    for (const a of attempts) {
       const p = base();
-      p.set("q", [year, make, model, q].filter(Boolean).join(" "));
-      p.set("category_ids", env.EBAY_PARTS_CATEGORY || "6030");
+      if (a.compat) {
+        p.set("q", q);
+        p.set("compatibility_filter", "Year:" + year + ";Make:" + make + ";Model:" + model + (a.withTrim ? ";Trim:" + trim : ""));
+      } else {
+        p.set("q", [year, make, model, a.withTrim ? trim : "", q].filter(Boolean).join(" "));
+      }
+      p.set("category_ids", category);
       let r = await search(token, env, p);
-      if (!r.ok) { p.delete("category_ids"); r = await search(token, env, p); }
-      if (!r.ok) throw new Error("eBay search failed (" + r.status + ")");
-      out = { fitment: "keyword", body: r.body };
+      if (!r.ok && !a.compat) { p.delete("category_ids"); r = await search(token, env, p); }
+      if (!r.ok) { lastFailure = r.status; continue; }
+      anyOk = true;
+      if (r.body.itemSummaries && r.body.itemSummaries.length) { out = { fitment: a.fitment, trim: a.withTrim ? trim : "", body: r.body }; break; }
     }
+    if (!out && !anyOk) throw new Error("eBay search failed (" + lastFailure + ")");
+    if (!out) out = { fitment: "keyword", trim: "", body: { total: 0, itemSummaries: [] } };
 
     const items = (out.body.itemSummaries || []).map(normalizeItem).filter((i) => i.url && i.price != null);
     res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
-    return res.end(JSON.stringify({ configured: true, fitment: out.fitment, total: out.body.total || items.length, items }));
+    return res.end(JSON.stringify({ configured: true, fitment: out.fitment, trim: out.trim, total: out.body.total || items.length, items }));
   } catch (e) {
     res.statusCode = 502;
     return res.end(JSON.stringify({ configured: true, error: e.message || "Search failed", items: [] }));

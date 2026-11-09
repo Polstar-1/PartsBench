@@ -3,9 +3,9 @@ import Icon from "../Icon";
 import PartResults from "./PartResults";
 import { catalogFor, countParts, searchParts } from "../catalog";
 
-function PartRow({ id, label, terms, icon, path, vehicle, openId, setOpenId, sort, setSort, cond, setCond }) {
+function PartRow({ id, label, terms, icon, path, vehicle, openId, setOpenId, trim, sort, setSort, cond, setCond }) {
   const isOpen = openId === id;
-  const query = [vehicle.year, vehicle.make, vehicle.model, terms].filter(Boolean).join(" ");
+  const query = [vehicle.year, vehicle.make, vehicle.model, trim, terms].filter(Boolean).join(" ");
   const toggle = () => setOpenId(isOpen ? null : id);
   return (
     <div className="item-row">
@@ -18,7 +18,7 @@ function PartRow({ id, label, terms, icon, path, vehicle, openId, setOpenId, sor
         </span>
         <span className={"item-row-chev" + (isOpen ? " open" : "")}>›</span>
       </div>
-      {isOpen && <PartResults vehicle={vehicle} terms={terms} query={query} sort={sort} setSort={setSort} cond={cond} setCond={setCond} />}
+      {isOpen && <PartResults vehicle={vehicle} terms={terms} query={query} trim={trim} sort={sort} setSort={setSort} cond={cond} setCond={setCond} />}
     </div>
   );
 }
@@ -30,7 +30,9 @@ export default function Shop({ vehicle, goIdentify }) {
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("best");
   const [cond, setCond] = useState("any");
-  const rowProps = { sort, setSort, cond, setCond };
+  const [useTrim, setUseTrim] = useState(true);
+  const trim = useTrim && vehicle && vehicle.trim ? vehicle.trim : "";
+  const rowProps = { trim, sort, setSort, cond, setCond };
 
   const cat = useMemo(() => catalogFor(vehicle), [vehicle]);
   const total = useMemo(() => countParts(cat), [cat]);
@@ -59,6 +61,13 @@ export default function Shop({ vehicle, goIdentify }) {
           <p>No vehicle selected yet.</p>
           <button className="btn-secondary" onClick={goIdentify}>Add Your Vehicle</button>
         </div>
+      )}
+
+      {vehicle && vehicle.trim && (
+        <label className="trim-toggle">
+          <input type="checkbox" checked={useTrim} onChange={(e) => setUseTrim(e.target.checked)} />
+          <span>Include the “{vehicle.trim}” trim in searches</span>
+        </label>
       )}
 
       {vehicle && (

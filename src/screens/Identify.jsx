@@ -1,11 +1,6 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import VehicleStage from "../VehicleStage";
-import { decodeVin, getModels } from "../nhtsa";
-
-const MAKES = ["Acura","Alfa Romeo","Audi","BMW","Buick","Cadillac","Chevrolet","Chrysler",
-  "Dodge","Fiat","Ford","Genesis","GMC","Honda","Hyundai","Infiniti","Jaguar","Jeep","Kia",
-  "Land Rover","Lexus","Lincoln","Mazda","Mercedes-Benz","Mini","Mitsubishi","Nissan",
-  "Porsche","Ram","Subaru","Tesla","Toyota","Volkswagen","Volvo"];
+import { decodeVin, getModels, getMakes, FALLBACK_MAKES } from "../nhtsa";
 
 const CURRENT_YEAR = new Date().getFullYear() + 1;
 const YEAR_MIN = 1990;
@@ -42,12 +37,20 @@ export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, g
 
   const [year, setYear] = useState("");
   const [make, setMake] = useState("");
+  const [makeText, setMakeText] = useState("");
+  const [makes, setMakes] = useState(FALLBACK_MAKES);
   const [model, setModel] = useState("");
   const [models, setModels] = useState([]);
   const [modelsLoading, setModelsLoading] = useState(false);
   const [ymmError, setYmmError] = useState("");
 
   const [mileage, setMileage] = useState("");
+
+  useEffect(() => {
+    let live = true;
+    getMakes().then((list) => { if (live) setMakes(list); }).catch(() => {});
+    return () => { live = false; };
+  }, []);
 
   const decoding = phase === "scan" || phase === "land";
 
@@ -84,6 +87,12 @@ export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, g
   function handleLanded() {
     onDraft(pendingRef.current);
     setPhase("done");
+  }
+
+  function handleMakeText(text) {
+    setMakeText(text);
+    const hit = makes.find((m) => m.toLowerCase() === text.trim().toLowerCase()) || "";
+    handleYearOrMake(year, hit);
   }
 
   function handleYearOrMake(nextYear, nextMake) {
@@ -151,10 +160,12 @@ export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, g
                 </div>
                 <div>
                   <label htmlFor="make">Make</label>
-                  <select id="make" value={make} onChange={(e) => handleYearOrMake(year, e.target.value)}>
-                    <option value="">Make</option>
-                    {MAKES.map((m) => <option key={m} value={m}>{m}</option>)}
-                  </select>
+                  <input id="make" list="make-options" value={makeText} placeholder="Type a make"
+                    autoComplete="off" autoCapitalize="words" spellCheck="false"
+                    onChange={(e) => handleMakeText(e.target.value)} />
+                  <datalist id="make-options">
+                    {makes.map((m) => <option key={m} value={m} />)}
+                  </datalist>
                 </div>
                 <div>
                   <label htmlFor="model">Model</label>
@@ -165,6 +176,7 @@ export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, g
                 </div>
               </div>
               <button className="btn-primary block" onClick={handleYmmSubmit} disabled={!model}>Find Parts</button>
+              {makeText.trim() && !make && <p className="hint" style={{ marginTop: 10 }}>Pick a make from the suggestions. Not seeing yours? Try the VIN tab.</p>}
               {ymmError && <p className="error-note">{ymmError}</p>}
             </div>
           )}
