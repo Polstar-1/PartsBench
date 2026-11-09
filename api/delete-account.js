@@ -35,7 +35,7 @@ export default async function handler(req, res) {
   } catch {
     return res.status(502).json({ code: "who-network", error: "Couldn't reach the account service. Try again." });
   }
-  if (!user || !user.id) return res.status(401).json({ code: "who-" + whoStatus, error: "Please sign in again, then try once more." });
+  if (!user || !user.id) return res.status(401).json({ code: "who-" + whoStatus, error: "Your login on this device has expired. Tap Sign out, sign in again, then try once more." });
 
   const headers = { apikey: secret, "content-type": "application/json" };
   if (secret.startsWith("eyJ")) headers.Authorization = "Bearer " + secret; // older-style keys also go here

@@ -95,7 +95,7 @@ export default function useAuth() {
 
   async function signOut() {
     if (!configured) return OK;
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "local" }); // this device only; other devices stay signed in
     return OK;
   }
 
