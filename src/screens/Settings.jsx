@@ -40,7 +40,7 @@ function SignIn({ auth }) {
   return (
     <div className="panel">
       <p className="section-title" style={{ marginBottom: 6 }}>Sign in or create an account</p>
-      <p className="settings-hint">No password. We email you a code each time you sign in.</p>
+      <p className="settings-hint">No password. We email you a code each time you sign in. Your Garage will follow you to every device.</p>
 
       {step === "email" && (
         <form onSubmit={(e) => { e.preventDefault(); if (looksLikeEmail(email)) send(); }}>
@@ -177,7 +177,7 @@ function ChangeEmail({ auth }) {
   );
 }
 
-export default function Settings({ auth }) {
+export default function Settings({ auth, sync }) {
   return (
     <>
       <p className="eyebrow">Settings</p>
@@ -206,8 +206,14 @@ export default function Settings({ auth }) {
             <ChangeEmail auth={auth} />
             <div className="panel">
               <p className="section-title" style={{ marginBottom: 6 }}>Garage</p>
-              <p className="settings-hint" style={{ marginBottom: 14 }}>Your saved vehicles and maintenance logs are stored on this device. Syncing them to your account is coming.</p>
-              <button className="btn-secondary" onClick={auth.signOut}>Sign out</button>
+              <p className="settings-hint" style={{ marginBottom: 14 }}>
+                {sync && sync.status === "error"
+                  ? "Couldn't reach your account right now. Your Garage is still saved on this device and will sync when it can."
+                  : sync && sync.status === "syncing"
+                    ? "Syncing your Garage…"
+                    : "Your saved vehicles and maintenance logs are saved to your account, so they follow you to any device you sign in on."}
+              </p>
+              <button className="btn-secondary" onClick={() => auth.signOut()}>Sign out</button>
             </div>
           </>
         )}

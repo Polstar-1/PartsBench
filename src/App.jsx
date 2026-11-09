@@ -8,6 +8,7 @@ import Shop from "./screens/Shop";
 import Ask from "./screens/Ask";
 import Settings from "./screens/Settings";
 import useAuth from "./useAuth";
+import useGarageSync from "./useGarageSync";
 import { loadGarage, saveGarage, newId } from "./storage";
 
 const TABS = [
@@ -23,6 +24,20 @@ export default function App() {
   const [garage, setGarage] = useState(loadGarage);
   const [draft, setDraft] = useState(null); // a looked-up vehicle that isn't saved yet
   const auth = useAuth();
+  const sync = useGarageSync(auth.user, garage, setGarage);
+
+  // Signing out uploads anything still waiting, then empties this device's Garage
+  // so the next person to sign in here never sees these vehicles.
+  const accountAuth = {
+    ...auth,
+    signOut: async () => {
+      await sync.flush();
+      const r = await auth.signOut();
+      sync.clearLocal();
+      setDraft(null);
+      return r;
+    },
+  };
 
   useEffect(() => { saveGarage(garage); }, [garage]);
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
@@ -87,7 +102,7 @@ export default function App() {
         )}
         {tab === "shop" && <Shop vehicle={active} goIdentify={() => setTab("identify")} />}
         {tab === "ask" && <Ask vehicle={active} />}
-        {tab === "settings" && <Settings auth={auth} />}
+        {tab === "settings" && <Settings auth={accountAuth} sync={sync} />}
       </main>
 
       <nav className="tabbar" aria-label="Main">
