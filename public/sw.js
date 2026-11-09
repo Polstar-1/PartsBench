@@ -1,6 +1,6 @@
 // Parts Bench service worker: lets the app open offline.
 // Bump CACHE when you want to force everyone onto fresh files.
-const CACHE = "partsbench-v1";
+const CACHE = "partsbench-v2";
 
 self.addEventListener("install", () => self.skipWaiting());
 
@@ -15,8 +15,10 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   const url = new URL(req.url);
-  // Only handle our own files. NHTSA lookups and retailer links always go to the network.
+  // Only handle our own files. NHTSA lookups, parts search and retailer links always go to the network.
   if (req.method !== "GET" || url.origin !== self.location.origin) return;
+  // Live data (parts search) must never be served from the cache.
+  if (url.pathname.startsWith("/api/")) return;
 
   // Pages: network first so updates show up right away, cache as the offline fallback.
   if (req.mode === "navigate") {
