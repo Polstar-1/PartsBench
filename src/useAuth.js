@@ -6,6 +6,7 @@ function friendly(error) {
   if (!error) return null;
   const msg = (error.message || "").toLowerCase();
   if (error.status === 429 || /rate limit|security purposes|after \d+ seconds/.test(msg)) return "Too many tries. Wait a minute, then ask for a new code.";
+  if (/captcha/.test(msg)) return "Couldn't confirm you're a person. Reload the page and try again.";
   if (/not authorized/.test(msg)) return "That address isn't allowed to receive email yet. Email sending is still in test mode.";
   if (/expired|invalid/.test(msg) && /token|otp|code/.test(msg)) return "That code is wrong or has expired. Check it, or ask for a new one.";
   if (/already (been )?registered|already exists|email_exists/.test(msg)) return "That email is already used by another account.";
@@ -35,9 +36,10 @@ export default function useAuth() {
 
   const user = session ? session.user : null;
 
-  async function sendCode(email, name) {
+  async function sendCode(email, name, captchaToken) {
     if (!configured) return NOT_SET;
     const options = { shouldCreateUser: true };
+    if (captchaToken) options.captchaToken = captchaToken;
     if (name) options.data = { username: name };
     const { error } = await supabase.auth.signInWithOtp({ email, options });
     return error ? { error: friendly(error) } : OK;

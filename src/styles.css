@@ -393,3 +393,8 @@ select:disabled, input:disabled, textarea:disabled{ opacity:0.4; }
 .idea-reply strong{ color:var(--ink); }
 .idea-confirm{ display:inline-flex; gap:14px; }
 .idea .link-btn{ margin-top:8px; }
+
+/* Legal links + human check */
+.legal-links{ display:flex; justify-content:center; gap:20px; font-size:12.5px; margin:6px 0 4px; }
+.turnstile-box{ margin-top:12px; }
+.turnstile-box:empty{ margin-top:0; }

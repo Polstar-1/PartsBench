@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import Turnstile from "../Turnstile";
+import { SITE_KEY } from "../captcha";
 
 function useCooldown() {
   const [secs, setSecs] = useState(0);
@@ -21,11 +23,18 @@ function SignIn({ auth }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [cool, setCool] = useCooldown();
+  // Human check (only when a Turnstile key is set). Each token works once, so we ask for a new one after every send.
+  const [token, setToken] = useState("");
+  const [resetKey, setResetKey] = useState(0);
+  const [capFailed, setCapFailed] = useState(false);
+  const needCheck = Boolean(SITE_KEY);
+  const humanOk = !needCheck || Boolean(token);
 
   async function send() {
     setBusy(true); setErr("");
-    const r = await auth.sendCode(email.trim(), name.trim());
+    const r = await auth.sendCode(email.trim(), name.trim(), token);
     setBusy(false);
+    if (needCheck) { setToken(""); setResetKey((k) => k + 1); }
     if (r.error) { setErr(r.error); return; }
     setStep("code"); setCode(""); setCool(60);
   }
@@ -41,6 +50,7 @@ function SignIn({ auth }) {
     <div className="panel">
       <p className="section-title" style={{ marginBottom: 6 }}>Sign in or create an account</p>
       <p className="settings-hint">No password. We email you a code each time you sign in. Your Garage will follow you to every device.</p>
+      {needCheck && <Turnstile siteKey={SITE_KEY} resetKey={resetKey} onToken={(t) => { setToken(t); if (t) setCapFailed(false); }} onError={() => setCapFailed(true)} />}
 
       {step === "email" && (
         <form onSubmit={(e) => { e.preventDefault(); if (looksLikeEmail(email)) send(); }}>
@@ -50,9 +60,11 @@ function SignIn({ auth }) {
           <label htmlFor="su-name" style={{ marginTop: 14 }}>Account name <span className="opt">(new accounts)</span></label>
           <input id="su-name" type="text" autoComplete="nickname" maxLength={30} placeholder="What should we call you?"
             value={name} onChange={(e) => setName(e.target.value)} />
-          <button type="submit" className="btn-primary block" style={{ marginTop: 16 }} disabled={busy || !looksLikeEmail(email)}>
+          <button type="submit" className="btn-primary block" style={{ marginTop: 16 }} disabled={busy || !looksLikeEmail(email) || !humanOk}>
             {busy ? "Sending…" : "Email me a code"}
           </button>
+          {needCheck && !humanOk && !capFailed && <p className="settings-hint">Checking that you're a person…</p>}
+          <p className="settings-hint">By continuing you agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
         </form>
       )}
 
@@ -66,12 +78,13 @@ function SignIn({ auth }) {
             {busy ? "Checking…" : "Sign in"}
           </button>
           <div className="settings-links">
-            <button type="button" className="link-btn" disabled={cool > 0 || busy} onClick={send}>{cool > 0 ? "Send again in " + cool + "s" : "Send a new code"}</button>
+            <button type="button" className="link-btn" disabled={cool > 0 || busy || !humanOk} onClick={send}>{cool > 0 ? "Send again in " + cool + "s" : "Send a new code"}</button>
             <button type="button" className="link-btn" onClick={() => { setStep("email"); setErr(""); }}>Use a different email</button>
           </div>
         </form>
       )}
 
+      {capFailed && !token && <p className="error-note" role="alert">Couldn't load the check that confirms you're a person. Turn off any ad or content blocker for this site, then reload the page.</p>}
       {err && <p className="error-note" role="alert">{err}</p>}
     </div>
   );
@@ -265,6 +278,11 @@ export default function Settings({ auth, sync }) {
           </>
         )}
       </div>
+
+      <p className="legal-links">
+        <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>
+        <a href="/terms" target="_blank" rel="noopener">Terms of Use</a>
+      </p>
     </>
   );
 }
