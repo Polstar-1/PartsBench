@@ -84,7 +84,9 @@ export default function PartResults({ vehicle, terms, query, trim, sort, setSort
       {live && (
         <>
           <p className="pnote">
-            {items.length
+            {main.length === 0 && related.length > 0
+              ? "No exact matches on eBay for this right now" + (cond !== "any" ? " in that condition. Try “All”" : "") + ". These are related parts."
+              : items.length
               ? (data.fitment === "verified" ? "Listings eBay says fit your " : "Matched by keyword for your ") + [vehicle.year, vehicle.make, vehicle.model, data.trim].filter(Boolean).join(" ") + (data.fitment === "verified" ? "." : ". Double-check fit before you buy.")
               : "No eBay listings found for this one" + (cond !== "any" ? " in that condition. Try “All”" : "") + ". Try the stores below."}
           </p>

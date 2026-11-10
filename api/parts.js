@@ -6,6 +6,9 @@
 // With no keys set it answers { configured: false } and the app falls back to plain store links.
 
 const DEFAULT_CAMPAIGN = "5339243534";
+const PAGE = 200;      // listings per eBay request (eBay's maximum)
+const MAX_PAGES = 3;   // never read more than this many pages for one search
+const WANT_REAL = 24;  // stop paging once this many real (not lookalike) matches are found
 const TOKEN_URL = "https://api.ebay.com/identity/v1/oauth2/token";
 const SEARCH_URL = "https://api.ebay.com/buy/browse/v1/item_summary/search";
 
@@ -119,7 +122,7 @@ export default async function handler(req, res) {
     const p = new URLSearchParams();
     p.set("filter", "conditionIds:{" + COND_IDS[cond].join("|") + "}");
     if (SORTS[sort]) p.set("sort", SORTS[sort]);
-    p.set("limit", "60"); // ask for extra so there is still plenty left after the lookalike parts are set aside
+    p.set("limit", String(PAGE)); // ask for plenty so there is still enough left after lookalike parts are set aside
     return p;
   };
 
@@ -152,7 +155,21 @@ export default async function handler(req, res) {
       if (!r.ok && !a.compat) { p.delete("category_ids"); r = await search(token, env, p); }
       if (!r.ok) { lastFailure = r.status; continue; }
       anyOk = true;
-      if (r.body.itemSummaries && r.body.itemSummaries.length) { out = { fitment: a.fitment, trim: a.withTrim ? trim : "", body: r.body }; break; }
+      if (r.body.itemSummaries && r.body.itemSummaries.length) {
+        // eBay lists lookalike parts (sensors, seals) ahead of the real thing, so keep reading
+        // further pages until there are enough real matches.
+        const summaries = [...r.body.itemSummaries];
+        const realCount = () => summaries.map(normalizeItem).filter((i) => i.url && i.price != null && !isRelated(i.title, q)).length;
+        for (let page = 1; page < MAX_PAGES && realCount() < WANT_REAL && r.body.next && summaries.length < (r.body.total || 0); page++) {
+          p.set("offset", String(page * PAGE));
+          const more = await search(token, env, p);
+          if (!more.ok || !more.body.itemSummaries || !more.body.itemSummaries.length) break; // keep what we have
+          summaries.push(...more.body.itemSummaries);
+          r = more;
+        }
+        out = { fitment: a.fitment, trim: a.withTrim ? trim : "", body: { total: r.body.total, itemSummaries: summaries } };
+        break;
+      }
     }
     if (!out && !anyOk) throw new Error("eBay search failed (" + lastFailure + ")");
     if (!out) out = { fitment: "keyword", trim: "", body: { total: 0, itemSummaries: [] } };
