@@ -51,6 +51,7 @@ export function normalizeItem(it) {
     url: it.itemAffiliateWebUrl || it.itemWebUrl || "",
     seller: it.seller ? { name: it.seller.username || "", percent: it.seller.feedbackPercentage || "", score: it.seller.feedbackScore || 0 } : null,
     fits: it.compatibilityMatch === "EXACT",
+    leaf: Array.isArray(it.leafCategoryIds) ? it.leafCategoryIds.map(String) : [], // eBay's own category for the listing
   };
 }
 
@@ -62,23 +63,53 @@ const words = (s) => String(s || "").toLowerCase().split(/[^a-z0-9]+/).filter(Bo
 // Words that don't need to appear in a title (position, generic filler).
 const OPTIONAL = new Set(["front", "rear", "left", "right", "driver", "passenger", "upper", "lower", "inner", "outer", "and", "for", "the", "with", "kit", "set", "new", "oem", "engine", "assembly", "assy", "pair", "pack"]);
 // Words that usually mean "a different part" when they show up in a title but not in what was searched.
-const OTHER_PART = new Set(["sensor", "switch", "gasket", "seal", "bolt", "pulley", "bearing", "bracket", "tool", "puller", "harness", "connector", "relay", "cover", "mount", "wrench", "socket", "wire", "boot", "hardware", "holder", "gauge", "adapter", "clip", "retainer", "installer", "remover", "wiring", "rebuild", "overhaul", "piston", "rod", "conrod"].map(stem));
+const OTHER_PART = new Set(["sensor", "switch", "gasket", "seal", "bolt", "pulley", "bearing", "bracket", "tool", "puller", "harness", "connector", "relay", "cover", "mount", "wrench", "socket", "wire", "boot", "hardware", "holder", "gauge", "adapter", "clip", "retainer", "installer", "remover", "wiring", "rebuild", "overhaul", "piston", "rod", "conrod", "rotor", "caliper", "pad", "tensioner", "idler", "component"].map(stem));
 
 // Only the start of a title says what the part IS. Everything after "for", "with", "&", "w/" is extra
 // ("Head Gasket Set w/ Head Bolts", "Crankshaft for Saab 9-3"), so lookalike words are judged there only.
-const SPLIT = /\bw\/|\b(?:with|for|fits?|includes?|including|plus|compatible)\b|&|\+|,|\(|\[/;
+const SPLIT = /\bw\/|\b(?:with|for|fits?|includes?|including|plus|compatible)\b|&|\+|,/;
 function leadSegment(title) {
-  const parts = String(title || "").toLowerCase().split(SPLIT).map((x) => x.trim()).filter(Boolean);
+  const plain = String(title || "").toLowerCase().replace(/\([^)]*\)|\[[^\]]*\]/g, " "); // "(277mm)", "[Enhanced Strength]" are not part names
+  const parts = plain.split(SPLIT).map((x) => x.trim()).filter((x) => /[a-z]{3}/.test(x)); // skip fragments with no real word, like "10.91''"
   return parts[0] || "";
 }
 
-export function isRelated(title, q) {
+// "Rear pads" are the wrong part when the search says front (and likewise left/right, upper/lower, inner/outer).
+const OPPOSITE = { front: "rear", rear: "front", left: "right", right: "left", upper: "lower", lower: "upper", inner: "outer", outer: "inner" };
+
+// Why a title looks like a different part ("" = it looks right): "missing" a searched word, "opposite" side/position, or "other" part word.
+function relatedReason(title, q) {
   const have = new Set(words(title).map(stem));
   const asked = words(q).filter((w) => w.length > 1 && !OPTIONAL.has(w)).map(stem);
-  if (asked.some((w) => !have.has(w))) return true; // a word that was searched for is missing
+  if (asked.some((w) => !have.has(w))) return "missing"; // a word that was searched for is missing
+  const titleWords = new Set(words(title));
+  const leadWords = new Set(words(leadSegment(title)));
+  for (const w of words(q)) {
+    const o = OPPOSITE[w];
+    if (o && leadWords.has(o) && !titleWords.has(w)) return "opposite"; // asked for front, title says rear only
+  }
   const askedSet = new Set(asked);
-  for (const w of words(leadSegment(title)).map(stem)) if (OTHER_PART.has(w) && !askedSet.has(w)) return true; // it is a sensor/seal/etc. and we didn't ask for one
-  return false;
+  for (const w of words(leadSegment(title)).map(stem)) if (OTHER_PART.has(w) && !askedSet.has(w)) return "other"; // a sensor/seal/etc. we didn't ask for
+  return "";
+}
+
+export function isRelated(title, q) { return relatedReason(title, q) !== ""; }
+
+// eBay files every listing in a specific category ("Serpentine Belts", "Belt Tensioners", "Crankshafts").
+// The listings that clearly match by title tell us which categories the wanted part lives in, and that
+// works for any part on any vehicle without a word list. Needs at least 3 clear matches to be trusted.
+export function categoryProfile(items, q) {
+  const seeds = items.filter((i) => i.leaf && i.leaf.length && !isRelated(i.title, q));
+  if (seeds.length < 3) return null;
+  const count = new Map();
+  for (const i of seeds) for (const id of new Set(i.leaf)) count.set(id, (count.get(id) || 0) + 1);
+  const ids = new Set();
+  let top = "", best = 0;
+  for (const [id, n] of count) {
+    if (n >= 2 && n / seeds.length >= 0.25) ids.add(id); // one stray listing doesn't make a category
+    if (n > best) { best = n; top = id; }
+  }
+  return ids.size && ids.has(top) ? { ids, top } : null;
 }
 
 // Does the title name this vehicle (its make or model)? Used to put listings made for your car first.
@@ -95,7 +126,16 @@ function namesVehicle(title, make, model) {
 // Real matches first (eBay's order kept inside each group), then related ones. Caps keep the response small.
 // With opts.make/model (best-match sort only), real matches that name your vehicle go ahead of the rest.
 export function rankRelevance(items, q, maxMain = 24, maxRelated = 12, opts = {}) {
-  const tagged = items.map((i) => ({ ...i, related: isRelated(i.title, q) }));
+  const profile = categoryProfile(items, q);
+  const tagged = items.map((i) => {
+    const reason = relatedReason(i.title, q);
+    if (profile && i.leaf && i.leaf.length) {
+      const inCategory = i.leaf.some((id) => profile.ids.has(id));
+      if (!inCategory) return { ...i, related: true };          // filed under a different eBay category: a different part
+      if (reason === "other") return { ...i, related: false };  // looks like a lookalike by words, but eBay files it with the real part
+    }
+    return { ...i, related: reason !== "" };
+  });
   const real = tagged.filter((i) => !i.related);
   const boost = opts.make || opts.model;
   const ordered = boost ? [...real.filter((i) => namesVehicle(i.title, opts.make, opts.model)), ...real.filter((i) => !namesVehicle(i.title, opts.make, opts.model))] : real;
@@ -195,6 +235,21 @@ export default async function handler(req, res) {
           if (!more.ok || !more.body.itemSummaries || !more.body.itemSummaries.length) break; // keep what we have
           summaries.push(...more.body.itemSummaries);
           r = more;
+        }
+        // Few real matches? Search again inside the category the real matches live in, which skips the lookalikes.
+        if (countReal(summaries) > 0 && countReal(summaries) < WANT_REAL && calls < MAX_CALLS) {
+          const prof = categoryProfile(summaries.map(normalizeItem), q);
+          if (prof && prof.top) {
+            const p2 = new URLSearchParams(p);
+            p2.delete("offset");
+            p2.set("category_ids", prof.top);
+            calls++;
+            const focused = await search(token, env, p2);
+            if (focused.ok && focused.body.itemSummaries) {
+              const seen = new Set(summaries.map((x) => x.itemId));
+              for (const it of focused.body.itemSummaries) if (!seen.has(it.itemId)) summaries.push(it);
+            }
+          }
         }
         const found = { fitment: a.fitment, trim: a.withTrim ? trim : "", body: { total: r.body.total, itemSummaries: summaries } };
         if (countReal(summaries) > 0) { out = found; break; }
