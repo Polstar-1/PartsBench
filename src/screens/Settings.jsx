@@ -200,14 +200,14 @@ function DeleteAccount({ auth }) {
       <p className="section-title" style={{ marginBottom: 6 }}>Delete account</p>
       {!open && (
         <>
-          <p className="settings-hint" style={{ marginBottom: 14 }}>Permanently removes your account and the Garage saved to it.</p>
+          <p className="settings-hint" style={{ marginBottom: 14 }}>Permanently removes your account, the Garage saved to it, and anything you posted on the Ideas board.</p>
           <button className="btn-secondary" onClick={() => setOpen(true)}>Delete my account</button>
         </>
       )}
       {open && (
         <form onSubmit={(e) => { e.preventDefault(); if (matches && !busy) remove(); }}>
           <p className="settings-hint" style={{ marginTop: 0 }}>
-            This can't be undone. Your account, your saved vehicles and your maintenance logs will be deleted from every device.
+            This can't be undone. Your account, your saved vehicles, your maintenance logs, and any ideas, votes and messages you posted will be deleted from every device.
           </p>
           <label htmlFor="del-email">Type <strong>{email}</strong> to confirm</label>
           <input id="del-email" type="email" autoComplete="off" autoCapitalize="off" spellCheck="false"

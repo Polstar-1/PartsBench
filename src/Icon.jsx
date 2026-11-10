@@ -29,6 +29,7 @@ export default function Icon({ name, size = 22 }) {
     case "garage": return (<svg {...c}><path d="M3 10l9-6 9 6v10H3z" /><rect x="7" y="12" width="10" height="8" /><line x1="7" y1="15" x2="17" y2="15" /><line x1="7" y1="17.5" x2="17" y2="17.5" /></svg>);
     case "wrench": return (<svg {...c}><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z" /></svg>);
     case "tag": return (<svg {...c}><path d="M3 12V4h8l10 10-8 8z" /><circle cx="7.5" cy="8.5" r="1.3" /></svg>);
+    case "bulb": return (<svg {...c}><path d="M9 18h6" /><path d="M10 21h4" /><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2.2h5c.1-1 .5-1.7 1.1-2.2A6 6 0 0 0 12 3z" /></svg>);
     case "chat": return (<svg {...c}><path d="M4 5h16v11H9l-5 4z" /><line x1="8" y1="9" x2="16" y2="9" /><line x1="8" y1="12" x2="13" y2="12" /></svg>);
     case "check": return (<svg {...c}><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>);
     case "cog": return (<svg {...c}><circle cx="12" cy="12" r="7.2" /><circle cx="12" cy="12" r="2.8" /><g strokeWidth="2.6"><line x1="19.2" y1="12" x2="21.6" y2="12" /><line x1="17.09" y1="17.09" x2="18.79" y2="18.79" /><line x1="12" y1="19.2" x2="12" y2="21.6" /><line x1="6.91" y1="17.09" x2="5.21" y2="18.79" /><line x1="4.8" y1="12" x2="2.4" y2="12" /><line x1="6.91" y1="6.91" x2="5.21" y2="5.21" /><line x1="12" y1="4.8" x2="12" y2="2.4" /><line x1="17.09" y1="6.91" x2="18.79" y2="5.21" /></g></svg>);

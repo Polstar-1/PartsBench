@@ -6,6 +6,7 @@ import Garage from "./screens/Garage";
 import Maintain from "./screens/Maintain";
 import Shop from "./screens/Shop";
 import Ask from "./screens/Ask";
+import Ideas from "./screens/Ideas";
 import Settings from "./screens/Settings";
 import useAuth from "./useAuth";
 import useGarageSync from "./useGarageSync";
@@ -17,6 +18,7 @@ const TABS = [
   { key: "maintain", label: "Maintain", icon: "wrench" },
   { key: "shop", label: "Shop", icon: "tag" },
   { key: "ask", label: "Ask", icon: "chat" },
+  { key: "ideas", label: "Ideas", icon: "bulb" },
 ];
 
 export default function App() {
@@ -111,6 +113,7 @@ export default function App() {
         )}
         {tab === "shop" && <Shop vehicle={active} goIdentify={() => setTab("identify")} />}
         {tab === "ask" && <Ask vehicle={active} />}
+        {tab === "ideas" && <Ideas auth={auth} goSettings={() => setTab("settings")} />}
         {tab === "settings" && <Settings auth={accountAuth} sync={sync} />}
       </main>
 
