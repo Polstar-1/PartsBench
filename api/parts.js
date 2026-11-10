@@ -8,6 +8,7 @@
 const DEFAULT_CAMPAIGN = "5339243534";
 const PAGE = 200;      // listings per eBay request (eBay's maximum)
 const MAX_PAGES = 3;   // never read more than this many pages for one search
+const MAX_CALLS = 6;   // most eBay requests one search may make in total
 const WANT_REAL = 24;  // stop paging once this many real (not lookalike) matches are found
 const TOKEN_URL = "https://api.ebay.com/identity/v1/oauth2/token";
 const SEARCH_URL = "https://api.ebay.com/buy/browse/v1/item_summary/search";
@@ -162,10 +163,14 @@ export default async function handler(req, res) {
     attempts.push({ fitment: "keyword", compat: false, withTrim: Boolean(trim) });
     if (trim) attempts.push({ fitment: "keyword", compat: false, withTrim: false });
 
-    let out = null;
+    let out = null;       // the first search that has real matches (not just lookalike parts)
+    let fallback = null;  // otherwise: the first search that returned anything at all
     let lastFailure = null;
     let anyOk = false;
+    let calls = 0;        // total eBay requests for this one search, kept small so it stays fast
+    const countReal = (list) => list.map(normalizeItem).filter((i) => i.url && i.price != null && !isRelated(i.title, q)).length;
     for (const a of attempts) {
+      if (calls >= MAX_CALLS) break;
       const p = base();
       if (a.compat) {
         p.set("q", q);
@@ -174,26 +179,30 @@ export default async function handler(req, res) {
         p.set("q", [year, make, model, a.withTrim ? trim : "", q].filter(Boolean).join(" "));
       }
       p.set("category_ids", category);
+      calls++;
       let r = await search(token, env, p);
-      if (!r.ok && !a.compat) { p.delete("category_ids"); r = await search(token, env, p); }
+      if (!r.ok && !a.compat) { p.delete("category_ids"); calls++; r = await search(token, env, p); }
       if (!r.ok) { lastFailure = r.status; continue; }
       anyOk = true;
       if (r.body.itemSummaries && r.body.itemSummaries.length) {
         // eBay lists lookalike parts (sensors, seals) ahead of the real thing, so keep reading
         // further pages until there are enough real matches.
         const summaries = [...r.body.itemSummaries];
-        const realCount = () => summaries.map(normalizeItem).filter((i) => i.url && i.price != null && !isRelated(i.title, q)).length;
-        for (let page = 1; page < MAX_PAGES && realCount() < WANT_REAL && r.body.next && summaries.length < (r.body.total || 0); page++) {
+        for (let page = 1; page < MAX_PAGES && calls < MAX_CALLS && countReal(summaries) < WANT_REAL && r.body.next && summaries.length < (r.body.total || 0); page++) {
           p.set("offset", String(page * PAGE));
+          calls++;
           const more = await search(token, env, p);
           if (!more.ok || !more.body.itemSummaries || !more.body.itemSummaries.length) break; // keep what we have
           summaries.push(...more.body.itemSummaries);
           r = more;
         }
-        out = { fitment: a.fitment, trim: a.withTrim ? trim : "", body: { total: r.body.total, itemSummaries: summaries } };
-        break;
+        const found = { fitment: a.fitment, trim: a.withTrim ? trim : "", body: { total: r.body.total, itemSummaries: summaries } };
+        if (countReal(summaries) > 0) { out = found; break; }
+        // Only lookalikes here (e.g. seals when you asked for the crankshaft). Remember it, then try the looser searches.
+        if (!fallback) fallback = found;
       }
     }
+    if (!out) out = fallback;
     if (!out && !anyOk) throw new Error("eBay search failed (" + lastFailure + ")");
     if (!out) out = { fitment: "keyword", trim: "", body: { total: 0, itemSummaries: [] } };
 
