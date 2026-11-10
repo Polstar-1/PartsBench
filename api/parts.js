@@ -68,10 +68,17 @@ const OTHER_PART = new Set(["sensor", "switch", "gasket", "seal", "bolt", "pulle
 // Only the start of a title says what the part IS. Everything after "for", "with", "&", "w/" is extra
 // ("Head Gasket Set w/ Head Bolts", "Crankshaft for Saab 9-3"), so lookalike words are judged there only.
 const SPLIT = /\bw\/|\b(?:with|for|fits?|includes?|including|plus|compatible)\b|&|\+|,/;
-function leadSegment(title) {
+function leadSegment(title, askedStems = []) {
   const plain = String(title || "").toLowerCase().replace(/\([^)]*\)|\[[^\]]*\]/g, " "); // "(277mm)", "[Enhanced Strength]" are not part names
-  const parts = plain.split(SPLIT).map((x) => x.trim()).filter((x) => /[a-z]{3}/.test(x)); // skip fragments with no real word, like "10.91''"
-  return parts[0] || "";
+  const segs = plain.split(SPLIT).map((x) => x.trim()).filter((x) => /[a-z]{3}/.test(x)); // skip fragments with no real word, like "10.91''"
+  if (!segs.length) return "";
+  // Many titles start with the vehicle list ("For Chevy Express Tahoe w/105 Amp Serpentine Belt Kit"), so the part
+  // name is in a later piece. Read up to and including the first piece that holds every searched word.
+  if (askedStems.length) {
+    const hit = segs.findIndex((sg) => { const have = new Set(words(sg).map(stem)); return askedStems.every((w) => have.has(w)); });
+    if (hit >= 0) return segs.slice(0, hit + 1).join(" ");
+  }
+  return segs[0];
 }
 
 // "Rear pads" are the wrong part when the search says front (and likewise left/right, upper/lower, inner/outer).
@@ -83,13 +90,14 @@ function relatedReason(title, q) {
   const asked = words(q).filter((w) => w.length > 1 && !OPTIONAL.has(w)).map(stem);
   if (asked.some((w) => !have.has(w))) return "missing"; // a word that was searched for is missing
   const titleWords = new Set(words(title));
-  const leadWords = new Set(words(leadSegment(title)));
+  const lead = leadSegment(title, asked);
+  const leadWords = new Set(words(lead));
   for (const w of words(q)) {
     const o = OPPOSITE[w];
     if (o && leadWords.has(o) && !titleWords.has(w)) return "opposite"; // asked for front, title says rear only
   }
   const askedSet = new Set(asked);
-  for (const w of words(leadSegment(title)).map(stem)) if (OTHER_PART.has(w) && !askedSet.has(w)) return "other"; // a sensor/seal/etc. we didn't ask for
+  for (const w of words(lead).map(stem)) if (OTHER_PART.has(w) && !askedSet.has(w)) return "other"; // a sensor/seal/etc. we didn't ask for
   return "";
 }
 
