@@ -85,10 +85,10 @@ export default function PartResults({ vehicle, terms, query, trim, sort, setSort
         </>
       )}
 
-      <details className="palso">
-        <summary>Also check these stores</summary>
-        <LinkDrawer query={query} />
-      </details>
+      <div className="palso">
+        <p className="palso-label">Also compare at</p>
+        <LinkDrawer query={query} variant="chips" />
+      </div>
     </div>
   );
 }

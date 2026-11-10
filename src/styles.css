@@ -361,10 +361,13 @@ select:disabled, input:disabled, textarea:disabled{ opacity:0.4; }
 .pskeleton{ display:grid; gap:10px; }
 .pcard-skel{ height:112px; animation:pulse 1.2s ease-in-out infinite; }
 @keyframes pulse{ 0%,100%{ opacity:.45 } 50%{ opacity:.9 } }
-.palso{ margin-top:14px; }
-.palso summary{ cursor:pointer; font-size:12.5px; color:var(--ink-dim); padding:6px 0; }
-.palso summary:hover{ color:var(--ink); }
-.palso .link-drawer{ padding:8px 0 0; }
+.palso{ margin-top:16px; padding-top:12px; border-top:1px solid var(--border); }
+.palso-label{ margin:0 0 8px; font-family:var(--font-mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); }
+.link-chips{ display:flex; flex-wrap:wrap; gap:7px; }
+.link-chip{ display:inline-flex; align-items:center; gap:7px; min-height:36px; padding:0 12px; background:var(--panel-2); border:1px solid var(--border); border-radius:999px; color:var(--ink); font-size:12.5px; text-decoration:none; transition:border-color .15s ease, opacity .15s ease; }
+.link-chip:hover{ border-color:var(--blue); }
+.link-chip.pending{ opacity:0.6; }
+.link-chip .go{ font-family:var(--font-mono); color:var(--blue); font-size:11px; }
 .pdisclose{ margin:12px 0 0; font-size:11px; line-height:1.5; color:var(--ink-faint); }
 @media (min-width:900px){
   .pgrid{ grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); }
