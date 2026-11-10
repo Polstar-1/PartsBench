@@ -8,6 +8,7 @@ import Shop from "./screens/Shop";
 import Ask from "./screens/Ask";
 import Ideas from "./screens/Ideas";
 import Settings from "./screens/Settings";
+import Plans from "./screens/Plans";
 import useAuth from "./useAuth";
 import useGarageSync from "./useGarageSync";
 import usePremium from "./usePremium";
@@ -131,7 +132,8 @@ export default function App() {
         {tab === "shop" && <Shop vehicle={active} goIdentify={() => setTab("identify")} initialQuery={shopQuery} onQueryUsed={clearShopQuery} />}
         {tab === "ask" && <Ask vehicle={active} />}
         {tab === "ideas" && <Ideas auth={auth} goSettings={() => setTab("settings")} />}
-        {tab === "settings" && <Settings auth={accountAuth} sync={sync} premium={premium} />}
+        {tab === "settings" && <Settings auth={accountAuth} sync={sync} premium={premium} goPlans={() => setTab("plans")} />}
+        {tab === "plans" && <Plans premium={premium} signedIn={!!auth.user} goSettings={() => setTab("settings")} />}
       </main>
 
       <nav className="tabbar" aria-label="Main">

@@ -18,3 +18,31 @@ export function rowIsPremium(row, now = Date.now()) {
 
 // Use this to decide whether a premium feature is available right now.
 export const canUsePremium = (premium) => GATING_OPEN || !!premium;
+
+/* ============================================================
+   PLANS SCREEN
+   PAYMENTS_ON = false -> the buy button stays off ("coming soon").
+   PRICES: leave a price as null until it's decided; the screen then says "Pricing coming soon".
+   Example once decided:  { monthly: "$1.99", yearly: "$14.99" }
+   status: "live" shows a check, "soon" shows "Coming soon" (don't promise what isn't built).
+   ============================================================ */
+export const PAYMENTS_ON = false;
+export const PRICES = { monthly: null, yearly: null };
+
+export const FEATURES = [
+  { group: "Included free", rows: [
+    { name: "VIN decoder", free: true, premium: true },
+    { name: "Garage (save your vehicles)", free: true, premium: true },
+    { name: "Safety recall lookup", free: true, premium: true },
+    { name: "Parts shop with live eBay listings", free: true, premium: true },
+    { name: "Basic maintenance tracker", note: "Oil & filter, tire rotation, air filters, wipers", free: true, premium: true },
+  ] },
+  { group: "Premium", rows: [
+    { name: "Email reminders when maintenance is due", free: false, premium: true },
+    { name: "Tire, brake and shock tracking", note: "Per tire and per axle, with \u201cLog all\u201d", free: false, premium: true },
+    { name: "Full maintenance schedule", note: "Fluids, belts, plugs, battery and more", free: false, premium: true },
+    { name: "Intervals tuned to your vehicle", note: "Hybrid, EV and all-wheel drive adjustments", free: false, premium: true },
+    { name: "Cost totals and exportable history", free: false, premium: "soon" },
+    { name: "Ask AI about your vehicle", free: false, premium: "soon" },
+  ] },
+];

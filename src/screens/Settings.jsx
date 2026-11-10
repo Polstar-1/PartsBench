@@ -237,7 +237,7 @@ function DeleteAccount({ auth }) {
   );
 }
 
-export default function Settings({ auth, sync, premium }) {
+export default function Settings({ auth, sync, premium, goPlans }) {
   return (
     <>
       <p className="eyebrow">Settings</p>
@@ -249,6 +249,11 @@ export default function Settings({ auth, sync, premium }) {
       </p>
 
       <div className="settings-grid">
+        <div className="panel">
+          <p className="section-title" style={{ marginBottom: 6 }}>Your plan: {premium ? "Premium" : "Free"}</p>
+          <p className="settings-hint" style={{ marginBottom: 14 }}>See what's included with Free and with Premium.</p>
+          <button className="btn-secondary" onClick={goPlans}>Compare plans</button>
+        </div>
         {!auth.configured && (
           <div className="panel">
             <p className="section-title" style={{ marginBottom: 6 }}>Accounts aren't switched on</p>
