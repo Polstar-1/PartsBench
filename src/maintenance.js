@@ -168,8 +168,7 @@ export function manualLink(v) {
 
 /* ---------- dates & status ---------- */
 
-export function todayISO() {
-  const d = new Date();
+export function todayISO(d = new Date()) {
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 }
 

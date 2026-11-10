@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Turnstile from "../Turnstile";
 import { SITE_KEY } from "../captcha";
+import Reminders from "./Reminders";
 
 function useCooldown() {
   const [secs, setSecs] = useState(0);
@@ -263,6 +264,7 @@ export default function Settings({ auth, sync, premium }) {
           <>
             <AccountName auth={auth} />
             <ChangeEmail auth={auth} />
+            <Reminders auth={auth} premium={premium} />
             <div className="panel">
               <p className="section-title" style={{ marginBottom: 6 }}>Garage</p>
               <p className="settings-hint" style={{ marginBottom: 14 }}>
