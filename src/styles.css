@@ -446,3 +446,6 @@ select:disabled, input:disabled, textarea:disabled{ opacity:0.4; }
 /* Premium tag under the logo */
 .brand-text{ display:flex; flex-direction:column; line-height:1; }
 .brand-tier{ font-weight:600; font-size:8.5px; letter-spacing:0.42em; margin-top:3px; color:var(--metal-shadow); }
+ul.upd-text{ list-style:none; }
+ul.upd-text li{ position:relative; padding-left:14px; margin-bottom:5px; }
+ul.upd-text li::before{ content:""; position:absolute; left:2px; top:0.62em; width:4px; height:4px; border-radius:50%; background:var(--orange); }

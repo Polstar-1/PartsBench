@@ -1,12 +1,20 @@
 /* ============================================================
    WHAT'S NEW
-   Add a new entry at the TOP of this list whenever something ships,
-   with the next id number. Only the newest 10 are ever shown, so the
-   older ones drop off by themselves; no need to delete anything.
+   New entries now write themselves: every push to GitHub adds one,
+   using the commit title and the lines under it (see
+   scripts/updates-from-git.mjs). Put [internal] in a commit title to
+   keep it out of the list. The entries below are the older, hand-written
+   ones. Only the newest 10 are ever shown, so old ones drop off by themselves.
    ============================================================ */
+/* global __GIT_UPDATES__ */
 export const MAX_UPDATES = 10;
 
+// Filled in at build time from the Git history. Empty when there is none.
+const FROM_GIT = typeof __GIT_UPDATES__ !== "undefined" ? __GIT_UPDATES__ : [];
+
 const ALL = [
+  { id: 6, date: "Nov 10", title: "Premium accounts",
+    text: "Accounts with Premium now show a small PREMIUM tag under the logo, and Settings shows your plan." },
   { id: 5, date: "Nov 10", title: "Maintenance got smarter",
     text: "Every item now links straight to a parts search. Your mileage estimates itself between updates (shown with a ~). Brake and tire intervals adjust for hybrids, EVs and all-wheel drive, with the reason shown. Plus a link to your owner's manual." },
   { id: 4, date: "Nov 10", title: "Tires, brakes and shocks, part by part",
@@ -20,5 +28,5 @@ const ALL = [
 ];
 
 // Newest first, never more than MAX_UPDATES.
-export const UPDATES = [...ALL].sort((a, b) => b.id - a.id).slice(0, MAX_UPDATES);
+export const UPDATES = [...FROM_GIT, ...ALL].sort((a, b) => b.id - a.id).slice(0, MAX_UPDATES);
 export const LATEST_ID = UPDATES.length ? UPDATES[0].id : 0;

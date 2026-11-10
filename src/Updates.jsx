@@ -63,7 +63,9 @@ export default function Updates() {
                     {u.date && <span className="upd-date">{u.date}</span>}
                     <span className="upd-chev" aria-hidden="true">{isOpen ? "\u2212" : "+"}</span>
                   </button>
-                  {isOpen && <p className="upd-text">{u.text}</p>}
+                  {isOpen && (u.text.includes("\n")
+                    ? <ul className="upd-text">{u.text.split("\n").map((l, i) => <li key={i}>{l}</li>)}</ul>
+                    : <p className="upd-text">{u.text}</p>)}
                 </div>
               );
             })}
