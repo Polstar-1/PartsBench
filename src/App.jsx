@@ -13,6 +13,7 @@ import useGarageSync from "./useGarageSync";
 import { loadGarage, saveGarage, newId } from "./storage";
 import { readDeepLink } from "./deeplink";
 import { withReading } from "./maintenance";
+import Updates from "./Updates";
 
 const TABS = [
   { key: "identify", label: "Identify", icon: "search" },
@@ -99,7 +100,10 @@ export default function App() {
           </button>
           PARTSBENCH
         </div>
-        <div className="topbar-sub">{active ? [active.year, active.make].filter(Boolean).join(" ") : "No vehicle yet"}</div>
+        <div className="topbar-right">
+          <div className="topbar-sub">{active ? [active.year, active.make].filter(Boolean).join(" ") : "No vehicle yet"}</div>
+          <Updates />
+        </div>
       </header>
 
       <main className="content">
