@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { planFor, getStatus, latestEntry, todayISO, fmtDate, fmtNum, LEVEL_RANK } from "../maintenance";
+import { planFor, getStatus, groupStatus, splitCost, latestEntry, todayISO, fmtDate, fmtNum, LEVEL_RANK } from "../maintenance";
 
-function LogForm({ item, vehicle, onSave, onCancel }) {
+function LogForm({ item, vehicle, onSave, onCancel, wholeSet = 0 }) {
   const [date, setDate] = useState(todayISO());
   const [miles, setMiles] = useState(vehicle.mileage != null ? String(vehicle.mileage) : "");
   const [cost, setCost] = useState("");
@@ -32,7 +32,7 @@ function LogForm({ item, vehicle, onSave, onCancel }) {
       </div>
       <div className="grid2b">
         <div>
-          <label htmlFor={"c-" + item.key}>Cost (optional)</label>
+          <label htmlFor={"c-" + item.key}>{wholeSet ? "Total cost (optional)" : "Cost (optional)"}</label>
           <input id={"c-" + item.key} inputMode="decimal" value={cost} placeholder="$"
             onChange={(e) => setCost(e.target.value.replace(/[^0-9.]/g, "").slice(0, 8))} />
         </div>
@@ -42,7 +42,7 @@ function LogForm({ item, vehicle, onSave, onCancel }) {
         </div>
       </div>
       <div className="row">
-        <button className="btn-primary block" onClick={submit}>Save entry</button>
+        <button className="btn-primary block" onClick={submit}>{wholeSet ? "Save all " + wholeSet : "Save entry"}</button>
         <button className="btn-secondary" onClick={onCancel}>Cancel</button>
       </div>
     </div>
@@ -130,8 +130,54 @@ function Row({ item, vehicle, open, mode, onOpen, onClose, onLog, onDeleteEntry,
   );
 }
 
+function rangeText(subs, key, unit) {
+  const vals = [...new Set(subs.map((x) => x[key]).filter(Boolean))].sort((a, b) => a - b);
+  if (!vals.length) return "";
+  return (vals.length === 1 ? fmtNum(vals[0]) : fmtNum(vals[0]) + "\u2013" + fmtNum(vals[vals.length - 1])) + " " + unit;
+}
+
+// Tires, brake pads and similar: one row that opens into the individual parts.
+function GroupRow({ item, vehicle, open, onToggle, openKey, mode, allOpen, onAllOpen, onAllClose, onOpen, onClose, onLog, onLogAll, onDeleteEntry, onSetInterval }) {
+  const gs = groupStatus(item, vehicle.log, vehicle.mileage);
+  const every = [rangeText(item.subs, "miles", "mi"), rangeText(item.subs, "months", "mo")].filter(Boolean).join(" / ");
+  return (
+    <div className={"mrow " + gs.level}>
+      <button className="mrow-head" onClick={onToggle} aria-expanded={open}>
+        <span className={"dot " + gs.level} />
+        <span className="mrow-main">
+          <span className="mrow-title">{item.label}</span>
+          <span className="mrow-sub">{gs.text}</span>
+        </span>
+        <span className="mrow-every">{every}</span>
+      </button>
+      {open && (
+        <div className="mrow-body">
+          {item.note && <p className="hint" style={{ marginTop: 0 }}>{item.note}</p>}
+          {allOpen ? (
+            <LogForm item={{ key: item.key + "-all" }} vehicle={vehicle} wholeSet={item.subs.length} onSave={(k, entry) => onLogAll(item, entry)} onCancel={onAllClose} />
+          ) : (
+            <div className="row">
+              <button className="btn-small" onClick={onAllOpen}>Log all {item.subs.length}</button>
+            </div>
+          )}
+          <div className="msubs">
+            {item.subs.map((sub) => (
+              <Row key={sub.key} item={sub} vehicle={vehicle}
+                open={openKey === sub.key} mode={mode}
+                onOpen={onOpen} onClose={onClose}
+                onLog={onLog} onDeleteEntry={onDeleteEntry} onSetInterval={onSetInterval} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, saveDraft }) {
   const [openKey, setOpenKey] = useState(null);
+  const [openGroup, setOpenGroup] = useState(null);
+  const [allGroup, setAllGroup] = useState(null);
   const [mode, setMode] = useState("log");
   const [odo, setOdo] = useState("");
 
@@ -162,7 +208,7 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, save
   }
 
   const plan = planFor(vehicle);
-  const rows = plan.map((it) => ({ it, st: getStatus(it, (vehicle.log || {})[it.key], vehicle.mileage) }));
+  const rows = plan.map((it) => ({ it, st: it.subs ? groupStatus(it, vehicle.log, vehicle.mileage) : getStatus(it, (vehicle.log || {})[it.key], vehicle.mileage) }));
   rows.sort((a, b) => LEVEL_RANK[a.st.level] - LEVEL_RANK[b.st.level]);
   const overdue = rows.filter((r) => r.st.level === "overdue").length;
   const soon = rows.filter((r) => r.st.level === "soon").length;
@@ -181,6 +227,19 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, save
       mileage: entry.mileage != null && (v.mileage == null || entry.mileage > v.mileage) ? entry.mileage : v.mileage,
     }));
     setOpenKey(null);
+  }
+
+  // Logs the same service on every part of a group (all four tires, both axles...). One cost is split evenly.
+  function logAll(group, entry) {
+    const keys = group.subs.map((x) => x.key);
+    const costs = splitCost(entry.cost, keys.length);
+    const note = (entry.notes ? entry.notes + " \u00b7 " : "") + "set of " + keys.length;
+    onUpdate(vehicle.id, (v) => {
+      const log = { ...(v.log || {}) };
+      keys.forEach((k, i) => { log[k] = [...(log[k] || []), { ...entry, id: entry.id + i, cost: costs[i], notes: note }]; });
+      return { log, mileage: entry.mileage != null && (v.mileage == null || entry.mileage > v.mileage) ? entry.mileage : v.mileage };
+    });
+    setAllGroup(null);
   }
 
   function deleteEntry(key, id) {
@@ -229,12 +288,19 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, save
       </p>
         </aside>
         <div className="maint-list">
-      {rows.map(({ it }) => (
+      {rows.map(({ it }) => (it.subs ? (
+        <GroupRow key={it.key} item={it} vehicle={vehicle}
+          open={openGroup === it.key} onToggle={() => { setOpenGroup(openGroup === it.key ? null : it.key); setOpenKey(null); setAllGroup(null); }}
+          openKey={openKey} mode={mode}
+          allOpen={allGroup === it.key} onAllOpen={() => { setAllGroup(it.key); setOpenKey(null); }} onAllClose={() => setAllGroup(null)}
+          onOpen={open} onClose={() => setOpenKey(null)}
+          onLog={logService} onLogAll={logAll} onDeleteEntry={deleteEntry} onSetInterval={setInterval_} />
+      ) : (
         <Row key={it.key} item={it} vehicle={vehicle}
           open={openKey === it.key} mode={mode}
           onOpen={open} onClose={() => setOpenKey(null)}
           onLog={logService} onDeleteEntry={deleteEntry} onSetInterval={setInterval_} />
-      ))}
+      )))}
 
         </div>
       </div>

@@ -171,6 +171,9 @@ select:disabled, input:disabled, textarea:disabled{ opacity:0.4; }
 .mrow.overdue .mrow-sub{ color:var(--red); } .mrow.soon .mrow-sub{ color:var(--amber); }
 .mrow-every{ font-family:var(--font-mono); font-size:10px; color:var(--ink-faint); text-align:right; white-space:nowrap; flex-shrink:0; }
 .mrow-body{ padding:0 14px 14px; }
+.msubs{ margin-top:12px; }
+.msubs .mrow{ background:var(--panel-2); margin-bottom:6px; }
+.msubs .mrow:last-child{ margin-bottom:0; }
 .logform{ margin-top:12px; }
 .history{ margin-top:14px; padding-top:10px; border-top:1px solid var(--border); }
 .hist-row{ display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:12px; color:var(--ink-dim); padding:4px 0; }
