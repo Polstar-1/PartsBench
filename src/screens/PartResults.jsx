@@ -37,6 +37,7 @@ function ResultCard({ item }) {
 
 export default function PartResults({ vehicle, terms, query, trim, sort, setSort, cond, setCond }) {
   const [state, setState] = useState(null); // { key, data, error }
+  const [showRelated, setShowRelated] = useState(false);
   const key = partsKey({ terms, vehicle, sort, cond, trim });
   const loading = !state || state.key !== key;
   const data = !loading ? state.data : null;
@@ -53,7 +54,13 @@ export default function PartResults({ vehicle, terms, query, trim, sort, setSort
   // Store links only (no eBay data available): same as before.
   if (!loading && !state.error && !live) return <LinkDrawer query={query} />;
 
-  const items = live ? data.items : [];
+  // The server puts real matches first and marks lookalikes (a sensor when you asked for the part itself, say)
+  // as "related". Show the real matches; the rest sit behind a button. If nothing is a clean match, show all.
+  const all = live ? data.items : [];
+  const main = all.filter((i) => !i.related);
+  const related = all.filter((i) => i.related);
+  const expanded = showRelated || main.length === 0;
+  const items = expanded ? [...main, ...related] : main;
   return (
     <div className="presults">
       <div className="ptoolbar">
@@ -82,6 +89,11 @@ export default function PartResults({ vehicle, terms, query, trim, sort, setSort
               : "No eBay listings found for this one" + (cond !== "any" ? " in that condition. Try “All”" : "") + ". Try the stores below."}
           </p>
           <div className="pgrid">{items.map((it) => <ResultCard key={it.id} item={it} />)}</div>
+          {related.length > 0 && main.length > 0 && (
+            <button className="btn-secondary prelated" aria-expanded={showRelated} onClick={() => setShowRelated(!showRelated)}>
+              {showRelated ? "Hide related parts" : "Show " + related.length + " related part" + (related.length === 1 ? "" : "s") + " (sensors, seals, tools…)"}
+            </button>
+          )}
         </>
       )}
 

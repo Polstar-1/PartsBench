@@ -50,6 +50,31 @@ export function normalizeItem(it) {
   };
 }
 
+// eBay matches ANY word in a title, so "crankshaft" also returns crankshaft position sensors, seals and
+// tools. These helpers mark listings that look like a different part as "related" so the app can put
+// the real matches first and tuck the rest behind a button.
+const stem = (w) => (w.length > 3 ? w.replace(/(es|s)$/, "") : w);
+const words = (s) => String(s || "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+// Words that don't need to appear in a title (position, generic filler).
+const OPTIONAL = new Set(["front", "rear", "left", "right", "driver", "passenger", "upper", "lower", "inner", "outer", "and", "for", "the", "with", "kit", "set", "new", "oem", "engine", "assembly", "assy", "pair", "pack"]);
+// Words that usually mean "a different part" when they show up in a title but not in what was searched.
+const OTHER_PART = new Set(["sensor", "switch", "gasket", "seal", "bolt", "pulley", "bearing", "bracket", "tool", "puller", "harness", "connector", "relay", "cover", "mount", "wrench", "socket", "wire", "boot", "hardware", "holder", "gauge", "adapter", "clip", "retainer", "installer", "remover", "wiring"].map(stem));
+
+export function isRelated(title, q) {
+  const have = new Set(words(title).map(stem));
+  const asked = words(q).filter((w) => w.length > 1 && !OPTIONAL.has(w)).map(stem);
+  if (asked.some((w) => !have.has(w))) return true; // a word that was searched for is missing
+  const askedSet = new Set(asked);
+  for (const w of have) if (OTHER_PART.has(w) && !askedSet.has(w)) return true; // it is a sensor/seal/etc. and we didn't ask for one
+  return false;
+}
+
+// Real matches first (eBay's order kept inside each group), then related ones. Caps keep the response small.
+export function rankRelevance(items, q, maxMain = 24, maxRelated = 12) {
+  const tagged = items.map((i) => ({ ...i, related: isRelated(i.title, q) }));
+  return [...tagged.filter((i) => !i.related).slice(0, maxMain), ...tagged.filter((i) => i.related).slice(0, maxRelated)];
+}
+
 async function getToken(id, secret) {
   if (tokenCache.value && Date.now() < tokenCache.expires - 60000) return tokenCache.value;
   const res = await fetch(TOKEN_URL, {
@@ -94,7 +119,7 @@ export default async function handler(req, res) {
     const p = new URLSearchParams();
     p.set("filter", "conditionIds:{" + COND_IDS[cond].join("|") + "}");
     if (SORTS[sort]) p.set("sort", SORTS[sort]);
-    p.set("limit", "24");
+    p.set("limit", "60"); // ask for extra so there is still plenty left after the lookalike parts are set aside
     return p;
   };
 
@@ -132,7 +157,7 @@ export default async function handler(req, res) {
     if (!out && !anyOk) throw new Error("eBay search failed (" + lastFailure + ")");
     if (!out) out = { fitment: "keyword", trim: "", body: { total: 0, itemSummaries: [] } };
 
-    const items = (out.body.itemSummaries || []).map(normalizeItem).filter((i) => i.url && i.price != null);
+    const items = rankRelevance((out.body.itemSummaries || []).map(normalizeItem).filter((i) => i.url && i.price != null), q);
     res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
     return res.end(JSON.stringify({ configured: true, fitment: out.fitment, trim: out.trim, total: out.body.total || items.length, items }));
   } catch (e) {

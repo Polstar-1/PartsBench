@@ -361,6 +361,7 @@ select:disabled, input:disabled, textarea:disabled{ opacity:0.4; }
 .pskeleton{ display:grid; gap:10px; }
 .pcard-skel{ height:112px; animation:pulse 1.2s ease-in-out infinite; }
 @keyframes pulse{ 0%,100%{ opacity:.45 } 50%{ opacity:.9 } }
+.prelated{ margin-top:12px; width:100%; }
 .palso{ margin-top:16px; padding-top:12px; border-top:1px solid var(--border); }
 .palso-label{ margin:0 0 8px; font-family:var(--font-mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); }
 .link-chips{ display:flex; flex-wrap:wrap; gap:7px; }
