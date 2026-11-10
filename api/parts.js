@@ -131,8 +131,9 @@ export function rankRelevance(items, q, maxMain = 24, maxRelated = 12, opts = {}
     const reason = relatedReason(i.title, q);
     if (profile && i.leaf && i.leaf.length) {
       const inCategory = i.leaf.some((id) => profile.ids.has(id));
-      if (!inCategory) return { ...i, related: true };          // filed under a different eBay category: a different part
-      if (reason === "other") return { ...i, related: false };  // looks like a lookalike by words, but eBay files it with the real part
+      if (!inCategory) return { ...i, related: true }; // filed under a different eBay category: a different part
+      // Being in the same category does NOT rescue a listing the word check flagged: sellers file
+      // belt + tensioner "component kits" under the belt category, but they are not a plain belt.
     }
     return { ...i, related: reason !== "" };
   });
