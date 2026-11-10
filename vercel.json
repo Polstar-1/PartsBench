@@ -1,3 +1,9 @@
 {
-  "cleanUrls": true
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/parts", "destination": "/api/seo" },
+    { "source": "/parts/:vehicle", "destination": "/api/seo?vehicle=:vehicle" },
+    { "source": "/parts/:vehicle/:part", "destination": "/api/seo?vehicle=:vehicle&part=:part" },
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" }
+  ]
 }

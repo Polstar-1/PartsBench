@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./styles.css";
 import Icon from "./Icon";
 import Identify from "./screens/Identify";
@@ -11,6 +11,7 @@ import Settings from "./screens/Settings";
 import useAuth from "./useAuth";
 import useGarageSync from "./useGarageSync";
 import { loadGarage, saveGarage, newId } from "./storage";
+import { readDeepLink } from "./deeplink";
 
 const TABS = [
   { key: "identify", label: "Identify", icon: "search" },
@@ -22,9 +23,13 @@ const TABS = [
 ];
 
 export default function App() {
-  const [tab, setTab] = useState("identify");
+  // Arriving from one of our search pages: open straight to Shop for that vehicle and part.
+  const [link] = useState(() => readDeepLink(window.location.search));
+  const [tab, setTab] = useState(link ? "shop" : "identify");
   const [garage, setGarage] = useState(loadGarage);
-  const [draft, setDraft] = useState(null); // a looked-up vehicle that isn't saved yet
+  const [draft, setDraft] = useState(link ? link.vehicle : null); // a looked-up vehicle that isn't saved yet
+  const [shopQuery, setShopQuery] = useState(link ? link.query : "");
+  const clearShopQuery = useCallback(() => setShopQuery(""), []);
   const auth = useAuth();
   const sync = useGarageSync(auth.user, garage, setGarage);
 
@@ -52,6 +57,7 @@ export default function App() {
 
   useEffect(() => { saveGarage(garage); }, [garage]);
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
+  useEffect(() => { if (link) window.history.replaceState(null, "", "/"); }, [link]);
 
   const savedMatch = draft && draft.vin ? garage.vehicles.find((v) => v.vin === draft.vin) || null : null;
   const savedActive = garage.vehicles.find((v) => v.id === garage.activeId) || null;
@@ -111,7 +117,7 @@ export default function App() {
             goGarage={() => setTab("garage")} goIdentify={() => setTab("identify")}
             saveDraft={() => saveVehicle(active, null)} />
         )}
-        {tab === "shop" && <Shop vehicle={active} goIdentify={() => setTab("identify")} />}
+        {tab === "shop" && <Shop vehicle={active} goIdentify={() => setTab("identify")} initialQuery={shopQuery} onQueryUsed={clearShopQuery} />}
         {tab === "ask" && <Ask vehicle={active} />}
         {tab === "ideas" && <Ideas auth={auth} goSettings={() => setTab("settings")} />}
         {tab === "settings" && <Settings auth={accountAuth} sync={sync} />}

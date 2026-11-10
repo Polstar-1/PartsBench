@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Icon from "../Icon";
 import PartResults from "./PartResults";
 import { catalogFor, countParts, searchParts } from "../catalog";
@@ -23,11 +23,17 @@ function PartRow({ id, label, terms, icon, path, vehicle, openId, setOpenId, tri
   );
 }
 
-export default function Shop({ vehicle, goIdentify }) {
+export default function Shop({ vehicle, goIdentify, initialQuery = "", onQueryUsed }) {
   const [groupKey, setGroupKey] = useState(null);
   const [subKey, setSubKey] = useState(null);
-  const [openId, setOpenId] = useState(null);
-  const [q, setQ] = useState("");
+  // Arriving from a search page: start with that part searched and its first match open.
+  const [openId, setOpenId] = useState(() => {
+    if (!initialQuery) return null;
+    const hit = searchParts(catalogFor(vehicle), initialQuery, 1)[0];
+    return hit ? hit.id : null;
+  });
+  const [q, setQ] = useState(initialQuery);
+  useEffect(() => { if (initialQuery && onQueryUsed) onQueryUsed(); }, [initialQuery, onQueryUsed]);
   const [sort, setSort] = useState("best");
   const [cond, setCond] = useState("any");
   const [useTrim, setUseTrim] = useState(true);

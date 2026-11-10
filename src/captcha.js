@@ -3,4 +3,5 @@
 // While this is empty, sign-in shows no human check at all.
 const DEFAULT_SITE_KEY = "0x4AAAAAAF6xrPw4Uh9G_LI-";
 
-export const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || DEFAULT_SITE_KEY;
+// Setting VITE_TURNSTILE_SITE_KEY to an empty value turns the check off (handy for testing).
+export const SITE_KEY = (import.meta.env.VITE_TURNSTILE_SITE_KEY ?? DEFAULT_SITE_KEY).trim();
