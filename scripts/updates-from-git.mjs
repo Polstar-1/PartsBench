@@ -5,6 +5,7 @@
 //   - the first line (title)          -> the update's title
 //   - each following line             -> a line in its description
 //   - put [internal] in the title      -> that commit is left out (for behind-the-scenes work)
+//   - a line containing [leave out ...] -> just that line is left out (e.g. a note you didn't mean to push)
 import { execFileSync } from "node:child_process";
 
 // Commits made before this moment are covered by the hand-written entries in src/updates.js.
@@ -22,7 +23,7 @@ export function parseLog(raw, cutoff = CUTOFF) {
     if (!hash || !Number.isFinite(ts) || ts <= cutoff) continue;
     const title = (subject || "").trim();
     if (!title || /\[internal\]/i.test(title) || /^(merge|revert)\b/i.test(title)) continue;
-    const lines = body.split("\n").map((l) => l.replace(/^\s*(?:[-*•]\s+)/, "").trim()).filter(Boolean).slice(0, 8).map((l) => clip(l, 220));
+    const lines = body.split("\n").map((l) => l.replace(/^\s*(?:[-*•]\s+)/, "").trim()).filter((l) => l && !/\[leave out[^\]]*\]/i.test(l)).slice(0, 8).map((l) => clip(l, 220));
     const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || "");
     out.push({ id: ts, date: m ? MONTHS[Number(m[2]) - 1] + " " + Number(m[3]) : undefined, title: clip(title, 80), text: lines.join("\n") });
   }
