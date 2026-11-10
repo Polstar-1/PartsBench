@@ -10,6 +10,7 @@ import Ideas from "./screens/Ideas";
 import Settings from "./screens/Settings";
 import useAuth from "./useAuth";
 import useGarageSync from "./useGarageSync";
+import usePremium from "./usePremium";
 import { loadGarage, saveGarage, newId } from "./storage";
 import { readDeepLink } from "./deeplink";
 import { withReading } from "./maintenance";
@@ -34,6 +35,7 @@ export default function App() {
   const clearShopQuery = useCallback(() => setShopQuery(""), []);
   const auth = useAuth();
   const sync = useGarageSync(auth.user, garage, setGarage);
+  const premium = usePremium(auth.user);
 
   // Signing out uploads anything still waiting, then empties this device's Garage
   // so the next person to sign in here never sees these vehicles.
@@ -98,7 +100,10 @@ export default function App() {
           <button className={"cog-btn" + (tab === "settings" ? " active" : "")} aria-label="Settings" aria-current={tab === "settings" ? "page" : undefined} onClick={() => setTab("settings")}>
             <Icon name="cog" size={22} />
           </button>
-          PARTSBENCH
+          <span className="brand-text">
+            PARTSBENCH
+            {premium && <span className="brand-tier">PREMIUM</span>}
+          </span>
         </div>
         <div className="topbar-right">
           <div className="topbar-sub">{active ? [active.year, active.make].filter(Boolean).join(" ") : "No vehicle yet"}</div>
@@ -126,7 +131,7 @@ export default function App() {
         {tab === "shop" && <Shop vehicle={active} goIdentify={() => setTab("identify")} initialQuery={shopQuery} onQueryUsed={clearShopQuery} />}
         {tab === "ask" && <Ask vehicle={active} />}
         {tab === "ideas" && <Ideas auth={auth} goSettings={() => setTab("settings")} />}
-        {tab === "settings" && <Settings auth={accountAuth} sync={sync} />}
+        {tab === "settings" && <Settings auth={accountAuth} sync={sync} premium={premium} />}
       </main>
 
       <nav className="tabbar" aria-label="Main">

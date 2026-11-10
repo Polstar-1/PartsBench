@@ -236,14 +236,14 @@ function DeleteAccount({ auth }) {
   );
 }
 
-export default function Settings({ auth, sync }) {
+export default function Settings({ auth, sync, premium }) {
   return (
     <>
       <p className="eyebrow">Settings</p>
       <h1 className="page-title">{auth.user ? "Your account." : "Settings."}</h1>
       <p className="page-sub">
         {auth.user
-          ? "Signed in as " + (auth.name || auth.user.email) + "."
+          ? "Signed in as " + (auth.name || auth.user.email) + "." + (premium ? " Premium account." : "")
           : "Sign in to keep an account. You can use the whole app without one."}
       </p>
 

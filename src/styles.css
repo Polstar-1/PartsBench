@@ -442,3 +442,7 @@ select:disabled, input:disabled, textarea:disabled{ opacity:0.4; }
 .brand{ flex:none; }
 @media (max-width:359px){ .topbar-right .topbar-sub{ display:none; } }
 .topbar{ gap:10px; }
+
+/* Premium tag under the logo */
+.brand-text{ display:flex; flex-direction:column; line-height:1; }
+.brand-tier{ font-weight:600; font-size:8.5px; letter-spacing:0.42em; margin-top:3px; color:var(--metal-shadow); }
