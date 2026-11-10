@@ -12,6 +12,7 @@ import useAuth from "./useAuth";
 import useGarageSync from "./useGarageSync";
 import { loadGarage, saveGarage, newId } from "./storage";
 import { readDeepLink } from "./deeplink";
+import { withReading } from "./maintenance";
 
 const TABS = [
   { key: "identify", label: "Identify", icon: "search" },
@@ -64,7 +65,7 @@ export default function App() {
   const active = savedMatch || draft || savedActive;
 
   function saveVehicle(d, mileage) {
-    const v = { ...d, id: newId(), nickname: "", mileage: mileage == null ? null : mileage, log: {}, intervals: {} };
+    const v = withReading(null, { ...d, id: newId(), nickname: "", mileage: mileage == null ? null : mileage, log: {}, intervals: {}, odos: [] });
     setGarage((g) => ({ vehicles: [...g.vehicles, v], activeId: v.id }));
     setDraft(null);
     setTab("garage");
@@ -73,7 +74,7 @@ export default function App() {
   function updateVehicle(id, patch) {
     setGarage((g) => ({
       ...g,
-      vehicles: g.vehicles.map((v) => (v.id === id ? { ...v, ...(typeof patch === "function" ? patch(v) : patch) } : v)),
+      vehicles: g.vehicles.map((v) => (v.id === id ? withReading(v, { ...v, ...(typeof patch === "function" ? patch(v) : patch) }) : v)),
     }));
   }
 
@@ -115,6 +116,7 @@ export default function App() {
         {tab === "maintain" && (
           <Maintain vehicle={active} onUpdate={updateVehicle}
             goGarage={() => setTab("garage")} goIdentify={() => setTab("identify")}
+            goShopFor={(q) => { setShopQuery(q); setTab("shop"); }}
             saveDraft={() => saveVehicle(active, null)} />
         )}
         {tab === "shop" && <Shop vehicle={active} goIdentify={() => setTab("identify")} initialQuery={shopQuery} onQueryUsed={clearShopQuery} />}

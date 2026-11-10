@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { planFor, getStatus, groupStatus, splitCost, latestEntry, todayISO, fmtDate, fmtNum, LEVEL_RANK } from "../maintenance";
+import { planFor, getStatus, groupStatus, splitCost, latestEntry, todayISO, fmtDate, fmtNum, estimateMiles, manualLink, LEVEL_RANK } from "../maintenance";
 
 function LogForm({ item, vehicle, onSave, onCancel, wholeSet = 0 }) {
   const [date, setDate] = useState(todayISO());
@@ -76,9 +76,14 @@ function IntervalForm({ item, onSave, onReset, onCancel }) {
   );
 }
 
-function Row({ item, vehicle, open, mode, onOpen, onClose, onLog, onDeleteEntry, onSetInterval }) {
+function ShopLink({ item, onShop, className = "link-btn" }) {
+  if (!item.shop || !onShop) return null;
+  return <button className={className} onClick={() => onShop(item.shop)}>Shop {item.shop} →</button>;
+}
+
+function Row({ item, vehicle, est, open, mode, onOpen, onClose, onLog, onDeleteEntry, onSetInterval, onShop }) {
   const entries = (vehicle.log || {})[item.key] || [];
-  const st = getStatus(item, entries, vehicle.mileage);
+  const st = getStatus(item, entries, vehicle.mileage, undefined, est);
   const last = latestEntry(entries);
   const every = [item.miles ? fmtNum(item.miles) + " mi" : "", item.months ? item.months + " mo" : ""].filter(Boolean).join(" / ");
 
@@ -92,10 +97,14 @@ function Row({ item, vehicle, open, mode, onOpen, onClose, onLog, onDeleteEntry,
         </span>
         <span className="mrow-every">{every}</span>
       </button>
+      {!open && (st.level === "overdue" || st.level === "soon") && item.shop && onShop && (
+        <div className="mrow-shop"><ShopLink item={item} onShop={onShop} /></div>
+      )}
 
       {open && (
         <div className="mrow-body">
           {item.note && <p className="hint" style={{ marginTop: 0 }}>{item.note}</p>}
+          {item.reason && <p className="hint tuned">Adjusted for your vehicle: {item.reason}</p>}
           {last && <p className="hint">Last done: {last.mileage != null ? fmtNum(last.mileage) + " mi · " : ""}{fmtDate(last.date)}</p>}
 
           {mode === "log" && <LogForm item={item} vehicle={vehicle} onSave={onLog} onCancel={onClose} />}
@@ -104,11 +113,13 @@ function Row({ item, vehicle, open, mode, onOpen, onClose, onLog, onDeleteEntry,
             <div className="row">
               <button className="btn-small" onClick={() => onOpen(item.key, "log")}>Log service</button>
               <button className="btn-small" onClick={() => onOpen(item.key, "interval")}>Edit interval</button>
+              {item.shop && onShop && <button className="btn-small" onClick={() => onShop(item.shop)}>Shop</button>}
             </div>
           )}
           {mode === "log" && (
             <button className="link-btn" style={{ marginTop: 10 }} onClick={() => onOpen(item.key, "interval")}>Edit interval{item.customized ? " (customized)" : ""}</button>
           )}
+          {mode === "log" && <div style={{ marginTop: 8 }}><ShopLink item={item} onShop={onShop} /></div>}
 
           {entries.length > 0 && (
             <div className="history">
@@ -137,8 +148,8 @@ function rangeText(subs, key, unit) {
 }
 
 // Tires, brake pads and similar: one row that opens into the individual parts.
-function GroupRow({ item, vehicle, open, onToggle, openKey, mode, allOpen, onAllOpen, onAllClose, onOpen, onClose, onLog, onLogAll, onDeleteEntry, onSetInterval }) {
-  const gs = groupStatus(item, vehicle.log, vehicle.mileage);
+function GroupRow({ item, vehicle, est, onShop, open, onToggle, openKey, mode, allOpen, onAllOpen, onAllClose, onOpen, onClose, onLog, onLogAll, onDeleteEntry, onSetInterval }) {
+  const gs = groupStatus(item, vehicle.log, vehicle.mileage, undefined, est);
   const every = [rangeText(item.subs, "miles", "mi"), rangeText(item.subs, "months", "mo")].filter(Boolean).join(" / ");
   return (
     <div className={"mrow " + gs.level}>
@@ -150,9 +161,13 @@ function GroupRow({ item, vehicle, open, onToggle, openKey, mode, allOpen, onAll
         </span>
         <span className="mrow-every">{every}</span>
       </button>
+      {!open && (gs.level === "overdue" || gs.level === "soon") && item.shop && onShop && (
+        <div className="mrow-shop"><ShopLink item={item} onShop={onShop} /></div>
+      )}
       {open && (
         <div className="mrow-body">
           {item.note && <p className="hint" style={{ marginTop: 0 }}>{item.note}</p>}
+          {item.reason && <p className="hint tuned">Adjusted for your vehicle: {item.reason}</p>}
           {allOpen ? (
             <LogForm item={{ key: item.key + "-all" }} vehicle={vehicle} wholeSet={item.subs.length} onSave={(k, entry) => onLogAll(item, entry)} onCancel={onAllClose} />
           ) : (
@@ -162,7 +177,7 @@ function GroupRow({ item, vehicle, open, onToggle, openKey, mode, allOpen, onAll
           )}
           <div className="msubs">
             {item.subs.map((sub) => (
-              <Row key={sub.key} item={sub} vehicle={vehicle}
+              <Row key={sub.key} item={sub} vehicle={vehicle} est={est} onShop={onShop}
                 open={openKey === sub.key} mode={mode}
                 onOpen={onOpen} onClose={onClose}
                 onLog={onLog} onDeleteEntry={onDeleteEntry} onSetInterval={onSetInterval} />
@@ -174,7 +189,7 @@ function GroupRow({ item, vehicle, open, onToggle, openKey, mode, allOpen, onAll
   );
 }
 
-export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, saveDraft }) {
+export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, goShopFor, saveDraft }) {
   const [openKey, setOpenKey] = useState(null);
   const [openGroup, setOpenGroup] = useState(null);
   const [allGroup, setAllGroup] = useState(null);
@@ -207,8 +222,11 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, save
     );
   }
 
+  // Due dates run off today's estimated mileage; saved numbers only change when you enter one.
+  const est = estimateMiles(vehicle);
+  const view = est.estimated ? { ...vehicle, mileage: est.miles } : vehicle;
   const plan = planFor(vehicle);
-  const rows = plan.map((it) => ({ it, st: it.subs ? groupStatus(it, vehicle.log, vehicle.mileage) : getStatus(it, (vehicle.log || {})[it.key], vehicle.mileage) }));
+  const rows = plan.map((it) => ({ it, st: it.subs ? groupStatus(it, view.log, view.mileage, undefined, est.estimated) : getStatus(it, (view.log || {})[it.key], view.mileage, undefined, est.estimated) }));
   rows.sort((a, b) => LEVEL_RANK[a.st.level] - LEVEL_RANK[b.st.level]);
   const overdue = rows.filter((r) => r.st.level === "overdue").length;
   const soon = rows.filter((r) => r.st.level === "soon").length;
@@ -275,6 +293,24 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, save
           <button className="btn-primary" onClick={saveOdo} disabled={odo === ""}>Update</button>
         </div>
         {vehicle.mileage == null && <p className="hint">Add your mileage so we can work out what's due.</p>}
+        {est.estimated && (
+          <p className="hint est-note">
+            Estimated today: about <strong>{fmtNum(est.miles)} mi</strong>, from your last entry of {fmtNum(vehicle.mileage)} mi
+            {est.daysOld ? " " + est.daysOld + " days ago" : ""} at about {fmtNum(est.perMonth)} mi a month
+            {est.source === "setting" ? " (your estimate)" : ""}. Enter your real mileage any time to make it exact.
+          </p>
+        )}
+        {vehicle.mileage != null && !est.estimated && est.daysOld > 30 && (
+          <p className="hint est-note">Your mileage was last updated {est.daysOld} days ago. Update it for accurate due dates.</p>
+        )}
+        {vehicle.mileage != null && est.source !== "readings" && (
+          <div className="est-rate">
+            <label htmlFor="mpy">About how many miles a year do you drive? (optional)</label>
+            <input id="mpy" inputMode="numeric" value={vehicle.milesPerYear || ""} placeholder="e.g. 12000"
+              onChange={(e) => onUpdate(vehicle.id, { milesPerYear: e.target.value.replace(/[^0-9]/g, "").slice(0, 6) })} />
+            <p className="hint">Lets the app keep your mileage current between updates. Once you've entered a few readings it works this out by itself.</p>
+          </div>
+        )}
       </div>
 
       <div className="summary">
@@ -284,19 +320,20 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, save
       </div>
 
       <p className="info-note">
-        These are common starting intervals, not a factory schedule for your exact engine. Your owner's manual always wins. Edit any interval to match it.
+        These are common starting intervals, not a factory schedule for your exact engine. Your owner's manual always wins. Edit any interval to match it.{" "}
+        <a href={manualLink(vehicle)} target="_blank" rel="noopener noreferrer">Find your owner's manual ↗</a>
       </p>
         </aside>
         <div className="maint-list">
       {rows.map(({ it }) => (it.subs ? (
-        <GroupRow key={it.key} item={it} vehicle={vehicle}
+        <GroupRow key={it.key} item={it} vehicle={view} est={est.estimated} onShop={goShopFor}
           open={openGroup === it.key} onToggle={() => { setOpenGroup(openGroup === it.key ? null : it.key); setOpenKey(null); setAllGroup(null); }}
           openKey={openKey} mode={mode}
           allOpen={allGroup === it.key} onAllOpen={() => { setAllGroup(it.key); setOpenKey(null); }} onAllClose={() => setAllGroup(null)}
           onOpen={open} onClose={() => setOpenKey(null)}
           onLog={logService} onLogAll={logAll} onDeleteEntry={deleteEntry} onSetInterval={setInterval_} />
       ) : (
-        <Row key={it.key} item={it} vehicle={vehicle}
+        <Row key={it.key} item={it} vehicle={view} est={est.estimated} onShop={goShopFor}
           open={openKey === it.key} mode={mode}
           onOpen={open} onClose={() => setOpenKey(null)}
           onLog={logService} onDeleteEntry={deleteEntry} onSetInterval={setInterval_} />

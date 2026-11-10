@@ -39,22 +39,58 @@ const ITEMS = [
 function profile(v) {
   const fuel = (v.fuel || "").toLowerCase();
   const drive = v.drive || "";
+  const elec = v.electrification || "";
   return {
-    ev: fuel === "electric",
+    ev: fuel === "electric" || /\bbev\b|battery electric/i.test(elec),
+    // Full and plug-in hybrids brake with the motor first. Mild hybrids barely do, so they don't count.
+    hybrid: !/mild/i.test(elec) && /strong hev|\bphev\b|plug-in|full hybrid|hybrid electric/i.test(elec),
     diesel: fuel.includes("diesel"),
     awd: /awd|4wd|4x4|all-wheel|four-wheel/i.test(drive),
   };
 }
 
+/* ---------- Tuned to the vehicle ----------
+   Only rules with a well-known reason. Each one says why, so nobody thinks it's a factory schedule.
+   A number the owner edits always wins over these. */
+const TUNE = [
+  { when: (p) => p.ev || p.hybrid, keys: ["brake-pads", "pads-f", "pads-r", "brake-rotors", "rotors-f", "rotors-r"], miles: 1.5,
+    reason: "Regenerative braking does part of the stopping, so pads and rotors usually wear slower." },
+  { when: (p) => p.ev, keys: ["tires", "tire-df", "tire-dr", "tire-pf", "tire-pr"], miles: 0.8,
+    reason: "Electric cars are heavy and deliver torque instantly, so tires wear faster." },
+  { when: (p) => p.awd, keys: ["rotate"], miles: 0.65,
+    reason: "All-wheel drive needs the four tires worn evenly, so rotate more often." },
+];
+
+const roundTo = (n, step) => Math.round(n / step) * step;
+
+/* ---------- Where to shop for each item ---------- */
+export const SHOP = {
+  oil: "oil filter", "cabin-air": "cabin air filter", "engine-air": "engine air filter", wipers: "wiper blades",
+  battery: "car battery", "battery-replace": "car battery", plugs: "spark plugs",
+  tires: "tires", "tire-df": "tires", "tire-dr": "tires", "tire-pf": "tires", "tire-pr": "tires",
+  "brake-pads": "front brake pads", "pads-f": "front brake pads", "pads-r": "rear brake pads",
+  "brake-rotors": "front brake rotors", "rotors-f": "front brake rotors", "rotors-r": "rear brake rotors",
+  shocks: "struts", "shocks-f": "struts", "shocks-r": "struts",
+  "brake-fluid": "brake fluid", trans: "transmission fluid", coolant: "antifreeze", diff: "differential fluid",
+  serp: "serpentine belt", timing: "timing belt kit", "fuel-filter": "fuel filter",
+};
+
 export function planFor(vehicle) {
   const p = profile(vehicle);
   const withCustom = (it) => {
     const custom = (vehicle.intervals || {})[it.key];
+    let miles = it.miles;
+    let reason = "";
+    for (const t of TUNE) {
+      if (miles && t.keys.includes(it.key) && t.when(p)) { miles = roundTo(miles * t.miles, 500); reason = t.reason; }
+    }
     return {
       ...it,
-      miles: custom && "miles" in custom ? custom.miles : it.miles,
+      miles: custom && "miles" in custom ? custom.miles : miles,
       months: custom && "months" in custom ? custom.months : it.months,
       customized: !!custom,
+      reason: custom && "miles" in custom ? "" : reason,
+      shop: SHOP[it.key] || "",
     };
   };
   return ITEMS
@@ -65,9 +101,69 @@ export function planFor(vehicle) {
     .map((it) => {
       if (!it.subs) return withCustom(it);
       // A group (tires, brakes...): the group row shows the standard interval, and each part has its own.
-      const subs = it.subs.map((sub) => withCustom({ miles: it.miles, months: it.months, note: it.note, ...sub }));
-      return { ...it, subs, customized: subs.some((x) => x.customized) };
+      const subs = it.subs.map((sub) => withCustom({ miles: it.miles, months: it.months, note: it.note, ...sub, key: sub.key }));
+      const top = withCustom({ ...it, subs: undefined });
+      return { ...it, miles: top.miles, shop: top.shop, reason: subs.find((x) => x.reason)?.reason || "", subs, customized: subs.some((x) => x.customized) };
     });
+}
+
+/* ---------- Mileage that keeps itself current ----------
+   A web app can't read the odometer. What it can do: remember each mileage you enter (and each service
+   you log), work out how fast you drive, and estimate today's number from that. Always labelled as an estimate. */
+
+const DAY = 86400000;
+const MAX_READINGS = 24;
+
+// Every dated mileage we know about: the readings kept, plus the mileage on logged services.
+function readings(v) {
+  const byDate = new Map();
+  const add = (date, miles) => {
+    if (!date || miles == null || !Number.isFinite(Number(miles))) return;
+    const m = Number(miles);
+    if (!byDate.has(date) || byDate.get(date) < m) byDate.set(date, m);
+  };
+  (v.odos || []).forEach((r) => add(r.date, r.miles));
+  Object.values(v.log || {}).forEach((list) => (list || []).forEach((e) => add(e.date, e.mileage)));
+  return [...byDate.entries()].map(([date, miles]) => ({ date, miles })).sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+
+// Adds today's reading when the mileage changed. Called whenever a vehicle is saved or updated.
+export function withReading(prev, next, today = todayISO()) {
+  if (next.mileage == null || next.mileage === "" || (prev && prev.mileage === next.mileage)) return next;
+  const list = [...(next.odos || (prev && prev.odos) || [])].filter((r) => r.date !== today);
+  list.push({ date: today, miles: Number(next.mileage) });
+  return { ...next, odos: list.slice(-MAX_READINGS) };
+}
+
+// { miles, estimated, perMonth, source, daysOld }
+export function estimateMiles(v, today = new Date()) {
+  const base = v.mileage == null || v.mileage === "" ? null : Number(v.mileage);
+  if (base == null) return { miles: null, estimated: false, perMonth: null, source: null, daysOld: null };
+  const all = readings(v);
+  const last = all[all.length - 1];
+  // The newest dated reading has to be the number on file; otherwise we don't know when it was true.
+  if (!last || last.miles !== base) return { miles: base, estimated: false, perMonth: null, source: null, daysOld: null };
+
+  const daysOld = Math.max(0, Math.round((today - parseISO(last.date)) / DAY));
+  let perDay = null;
+  let source = null;
+  const recent = all.slice(-8);
+  const span = (parseISO(last.date) - parseISO(recent[0].date)) / DAY;
+  if (recent.length >= 2 && span >= 30 && last.miles > recent[0].miles) {
+    perDay = (last.miles - recent[0].miles) / span;
+    source = "readings";
+  } else if (Number(v.milesPerYear) > 0) {
+    perDay = Number(v.milesPerYear) / 365;
+    source = "setting";
+  }
+  if (perDay == null) return { miles: base, estimated: false, perMonth: null, source: null, daysOld };
+  const add = Math.min(daysOld, 400) * perDay;
+  return { miles: add < 1 ? base : base + Math.round(add / 10) * 10, estimated: add >= 1, perMonth: Math.round(perDay * 30.4 / 10) * 10, source, daysOld };
+}
+
+export function manualLink(v) {
+  const q = [v.year, v.make, v.model, "owner's manual maintenance schedule"].filter(Boolean).join(" ");
+  return "https://www.google.com/search?q=" + encodeURIComponent(q);
 }
 
 /* ---------- dates & status ---------- */
@@ -100,7 +196,7 @@ export function latestEntry(entries) {
 }
 
 // level: overdue | soon | ok | none
-export function getStatus(item, entries, mileage, today = new Date()) {
+export function getStatus(item, entries, mileage, today = new Date(), est = false) {
   const last = latestEntry(entries);
   if (!last) return { level: "none", text: "Not logged yet", last: null };
 
@@ -120,7 +216,8 @@ export function getStatus(item, entries, mileage, today = new Date()) {
   const level = overdue ? "overdue" : soon ? "soon" : "ok";
 
   const bits = [];
-  if (milesLeft != null) bits.push(milesLeft < 0 ? fmtNum(-milesLeft) + " mi overdue" : fmtNum(milesLeft) + " mi left");
+  const tilde = est ? "~" : "";
+  if (milesLeft != null) bits.push(milesLeft < 0 ? tilde + fmtNum(-milesLeft) + " mi overdue" : tilde + fmtNum(milesLeft) + " mi left");
   if (daysLeft != null) {
     if (daysLeft < 0) bits.push(-daysLeft + " days overdue");
     else if (daysLeft <= 60) bits.push(daysLeft + " days left");
@@ -133,8 +230,8 @@ export function getStatus(item, entries, mileage, today = new Date()) {
 export const LEVEL_RANK = { overdue: 0, soon: 1, ok: 2, none: 3 };
 
 // A group (tires, brake pads...) takes its level from its most urgent part, with a short summary line.
-export function groupStatus(item, log, mileage, today = new Date()) {
-  const subs = item.subs.map((sub) => ({ sub, st: getStatus(sub, (log || {})[sub.key], mileage, today) }));
+export function groupStatus(item, log, mileage, today = new Date(), est = false) {
+  const subs = item.subs.map((sub) => ({ sub, st: getStatus(sub, (log || {})[sub.key], mileage, today, est) }));
   const count = (lvl) => subs.filter((x) => x.st.level === lvl).length;
   const level = subs.reduce((best, x) => (LEVEL_RANK[x.st.level] < LEVEL_RANK[best] ? x.st.level : best), "none");
   const parts = [];

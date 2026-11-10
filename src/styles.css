@@ -405,3 +405,11 @@ select:disabled, input:disabled, textarea:disabled{ opacity:0.4; }
 .legal-links{ display:flex; justify-content:center; gap:20px; font-size:12.5px; margin:6px 0 4px; }
 .turnstile-box{ margin-top:12px; }
 .turnstile-box:empty{ margin-top:0; }
+
+/* Maintenance: shop links, tuned notes, estimated mileage */
+.mrow-shop { padding: 0 14px 10px 38px; }
+.mrow-shop .link-btn { font-size: 13px; }
+.hint.tuned { color: var(--accent, #c8501a); }
+.est-note { margin-top: 10px; }
+.est-rate { margin-top: 12px; }
+.est-rate input { max-width: 180px; }
