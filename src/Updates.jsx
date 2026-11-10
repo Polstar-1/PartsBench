@@ -10,7 +10,7 @@ function writeSeen(n) {
   try { localStorage.setItem(KEY, String(n)); } catch { /* private mode: the dot just comes back next visit */ }
 }
 
-// A bell in the top bar. An orange dot means there's something you haven't seen yet.
+// An "Updates" pill in the top bar. An orange dot means there's something you haven't seen yet.
 export default function Updates() {
   const [open, setOpen] = useState(false);
   const [seen] = useState(readSeen);   // newest update you'd already looked at before this visit
@@ -36,11 +36,9 @@ export default function Updates() {
   return (
     <div className="upd" ref={box}>
       <button className={"upd-btn" + (open ? " active" : "")} onClick={toggle} aria-expanded={open} aria-haspopup="true"
-        aria-label={unread ? "What's new (new updates)" : "What's new"}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z" /><path d="M10 20a2 2 0 0 0 4 0" />
-        </svg>
+        aria-label={unread ? "Updates (new)" : "Updates"}>
         {unread && <span className="upd-dot" data-testid="upd-dot" />}
+        <span>Updates</span>
       </button>
       {open && (
         <div className="upd-panel" role="region" aria-label="What's new">
