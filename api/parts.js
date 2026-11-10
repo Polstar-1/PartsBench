@@ -61,21 +61,44 @@ const words = (s) => String(s || "").toLowerCase().split(/[^a-z0-9]+/).filter(Bo
 // Words that don't need to appear in a title (position, generic filler).
 const OPTIONAL = new Set(["front", "rear", "left", "right", "driver", "passenger", "upper", "lower", "inner", "outer", "and", "for", "the", "with", "kit", "set", "new", "oem", "engine", "assembly", "assy", "pair", "pack"]);
 // Words that usually mean "a different part" when they show up in a title but not in what was searched.
-const OTHER_PART = new Set(["sensor", "switch", "gasket", "seal", "bolt", "pulley", "bearing", "bracket", "tool", "puller", "harness", "connector", "relay", "cover", "mount", "wrench", "socket", "wire", "boot", "hardware", "holder", "gauge", "adapter", "clip", "retainer", "installer", "remover", "wiring"].map(stem));
+const OTHER_PART = new Set(["sensor", "switch", "gasket", "seal", "bolt", "pulley", "bearing", "bracket", "tool", "puller", "harness", "connector", "relay", "cover", "mount", "wrench", "socket", "wire", "boot", "hardware", "holder", "gauge", "adapter", "clip", "retainer", "installer", "remover", "wiring", "rebuild", "overhaul", "piston", "rod", "conrod"].map(stem));
+
+// Only the start of a title says what the part IS. Everything after "for", "with", "&", "w/" is extra
+// ("Head Gasket Set w/ Head Bolts", "Crankshaft for Saab 9-3"), so lookalike words are judged there only.
+const SPLIT = /\bw\/|\b(?:with|for|fits?|includes?|including|plus|compatible)\b|&|\+|,|\(|\[/;
+function leadSegment(title) {
+  const parts = String(title || "").toLowerCase().split(SPLIT).map((x) => x.trim()).filter(Boolean);
+  return parts[0] || "";
+}
 
 export function isRelated(title, q) {
   const have = new Set(words(title).map(stem));
   const asked = words(q).filter((w) => w.length > 1 && !OPTIONAL.has(w)).map(stem);
   if (asked.some((w) => !have.has(w))) return true; // a word that was searched for is missing
   const askedSet = new Set(asked);
-  for (const w of have) if (OTHER_PART.has(w) && !askedSet.has(w)) return true; // it is a sensor/seal/etc. and we didn't ask for one
+  for (const w of words(leadSegment(title)).map(stem)) if (OTHER_PART.has(w) && !askedSet.has(w)) return true; // it is a sensor/seal/etc. and we didn't ask for one
   return false;
 }
 
+// Does the title name this vehicle (its make or model)? Used to put listings made for your car first.
+function namesVehicle(title, make, model) {
+  const t = String(title || "").toLowerCase();
+  const rx = (v) => {
+    const parts = String(v || "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+    return parts.length ? new RegExp("\\b" + parts.join("[-\\s]?") + "\\b") : null;
+  };
+  const m = rx(make), d = rx(model);
+  return Boolean((m && m.test(t)) || (d && d.test(t)));
+}
+
 // Real matches first (eBay's order kept inside each group), then related ones. Caps keep the response small.
-export function rankRelevance(items, q, maxMain = 24, maxRelated = 12) {
+// With opts.make/model (best-match sort only), real matches that name your vehicle go ahead of the rest.
+export function rankRelevance(items, q, maxMain = 24, maxRelated = 12, opts = {}) {
   const tagged = items.map((i) => ({ ...i, related: isRelated(i.title, q) }));
-  return [...tagged.filter((i) => !i.related).slice(0, maxMain), ...tagged.filter((i) => i.related).slice(0, maxRelated)];
+  const real = tagged.filter((i) => !i.related);
+  const boost = opts.make || opts.model;
+  const ordered = boost ? [...real.filter((i) => namesVehicle(i.title, opts.make, opts.model)), ...real.filter((i) => !namesVehicle(i.title, opts.make, opts.model))] : real;
+  return [...ordered.slice(0, maxMain), ...tagged.filter((i) => i.related).slice(0, maxRelated)];
 }
 
 async function getToken(id, secret) {
@@ -174,7 +197,8 @@ export default async function handler(req, res) {
     if (!out && !anyOk) throw new Error("eBay search failed (" + lastFailure + ")");
     if (!out) out = { fitment: "keyword", trim: "", body: { total: 0, itemSummaries: [] } };
 
-    const items = rankRelevance((out.body.itemSummaries || []).map(normalizeItem).filter((i) => i.url && i.price != null), q);
+    const items = rankRelevance((out.body.itemSummaries || []).map(normalizeItem).filter((i) => i.url && i.price != null), q, 24, 12,
+      sort === "best" ? { make, model } : {}); // price / newest sorts keep their own order
     res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
     return res.end(JSON.stringify({ configured: true, fitment: out.fitment, trim: out.trim, total: out.body.total || items.length, items }));
   } catch (e) {
