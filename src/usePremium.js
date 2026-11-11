@@ -3,6 +3,7 @@ import { supabase, configured } from "./supabase";
 import { rowIsPremium } from "./premium";
 
 // Whether the signed-in account has Premium. Signed out, or any trouble reaching the account service: false.
+// null = signed in but still checking (so screens don't flash a locked state at someone who has Premium).
 export default function usePremium(user, tick = 0) {
   const uid = user ? user.id : null;
   const [state, setState] = useState({ uid: null, premium: false });
@@ -16,5 +17,6 @@ export default function usePremium(user, tick = 0) {
     return () => { live = false; };
   }, [uid, tick]);
 
-  return uid !== null && state.uid === uid && state.premium;
+  if (uid === null) return false;
+  return state.uid === uid ? state.premium : null;
 }

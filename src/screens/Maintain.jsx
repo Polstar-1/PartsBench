@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { canUsePremium } from "../premium";
 import { planFor, getStatus, groupStatus, splitCost, latestEntry, todayISO, fmtDate, fmtNum, estimateMiles, manualLink, LEVEL_RANK } from "../maintenance";
 
 function LogForm({ item, vehicle, onSave, onCancel, wholeSet = 0 }) {
@@ -189,7 +190,7 @@ function GroupRow({ item, vehicle, est, onShop, open, onToggle, openKey, mode, a
   );
 }
 
-export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, goShopFor, saveDraft }) {
+export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, goShopFor, saveDraft, premium, goPlans }) {
   const [openKey, setOpenKey] = useState(null);
   const [openGroup, setOpenGroup] = useState(null);
   const [allGroup, setAllGroup] = useState(null);
@@ -225,7 +226,9 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, goSh
   // Due dates run off today's estimated mileage; saved numbers only change when you enter one.
   const est = estimateMiles(vehicle);
   const view = est.estimated ? { ...vehicle, mileage: est.miles } : vehicle;
-  const plan = planFor(vehicle);
+  const full = premium === null || canUsePremium(premium); // null: still checking the account
+  const plan = planFor(vehicle, { full });
+  const lockedCount = full ? 0 : planFor(vehicle).length - plan.length;
   const rows = plan.map((it) => ({ it, st: it.subs ? groupStatus(it, view.log, view.mileage, undefined, est.estimated) : getStatus(it, (view.log || {})[it.key], view.mileage, undefined, est.estimated) }));
   rows.sort((a, b) => LEVEL_RANK[a.st.level] - LEVEL_RANK[b.st.level]);
   const overdue = rows.filter((r) => r.st.level === "overdue").length;
@@ -338,6 +341,17 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, goSh
           onOpen={open} onClose={() => setOpenKey(null)}
           onLog={logService} onDeleteEntry={deleteEntry} onSetInterval={setInterval_} />
       )))}
+
+      {!full && lockedCount > 0 && (
+        <section className="panel maint-locked" aria-labelledby="maint-locked-h">
+          <p id="maint-locked-h" className="section-title" style={{ marginBottom: 6 }}>{lockedCount} more items with Premium</p>
+          <p className="settings-hint" style={{ marginBottom: 14 }}>
+            Premium adds tire, brake and shock tracking (per tire and per axle), the full schedule (fluids, belts, spark plugs, battery and more),
+            intervals tuned to your vehicle, and email reminders when something is due.
+          </p>
+          <button className="btn-secondary" onClick={goPlans}>See Premium</button>
+        </section>
+      )}
 
         </div>
       </div>

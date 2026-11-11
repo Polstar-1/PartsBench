@@ -4,7 +4,7 @@
    GATING_OPEN = false -> premium features are only for accounts with Premium.
    Either way, accounts that really have Premium get the small PREMIUM tag under the logo.
    ============================================================ */
-export const GATING_OPEN = true;
+export const GATING_OPEN = false;
 
 // A row in the `premium` table counts while it's switched on and hasn't passed its end date.
 export function rowIsPremium(row, now = Date.now()) {

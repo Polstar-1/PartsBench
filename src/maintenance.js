@@ -36,6 +36,9 @@ const ITEMS = [
   { key: "fuel-filter", label: "Fuel filter", miles: 30000, months: null, diesel: true },
 ];
 
+// The basics that stay free. Everything else in ITEMS (and the tuned intervals) is Premium.
+export const FREE_KEYS = ["oil", "rotate", "cabin-air", "engine-air", "wipers"];
+
 function profile(v) {
   const fuel = (v.fuel || "").toLowerCase();
   const drive = v.drive || "";
@@ -75,14 +78,15 @@ export const SHOP = {
   serp: "serpentine belt", timing: "timing belt kit", "fuel-filter": "fuel filter",
 };
 
-export function planFor(vehicle) {
+// full = false gives the free plan: only the basics, with standard (untuned) intervals.
+export function planFor(vehicle, { full = true } = {}) {
   const p = profile(vehicle);
   const withCustom = (it) => {
     const custom = (vehicle.intervals || {})[it.key];
     let miles = it.miles;
     let reason = "";
     for (const t of TUNE) {
-      if (miles && t.keys.includes(it.key) && t.when(p)) { miles = roundTo(miles * t.miles, 500); reason = t.reason; }
+      if (full && miles && t.keys.includes(it.key) && t.when(p)) { miles = roundTo(miles * t.miles, 500); reason = t.reason; }
     }
     return {
       ...it,
@@ -94,6 +98,7 @@ export function planFor(vehicle) {
     };
   };
   return ITEMS
+    .filter((it) => full || FREE_KEYS.includes(it.key))
     .filter((it) => !(p.ev && (it.noEv || it.gas)))
     .filter((it) => !(it.gas && p.diesel))
     .filter((it) => !(it.diesel && !p.diesel))

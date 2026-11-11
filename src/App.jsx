@@ -154,7 +154,8 @@ export default function App() {
           <Maintain vehicle={active} onUpdate={updateVehicle}
             goGarage={() => setTab("garage")} goIdentify={() => setTab("identify")}
             goShopFor={(q) => { setShopQuery(q); setTab("shop"); }}
-            saveDraft={() => saveVehicle(active, null)} />
+            saveDraft={() => saveVehicle(active, null)}
+            premium={premium} goPlans={() => setTab("plans")} />
         )}
         {tab === "shop" && <Shop vehicle={active} goIdentify={() => setTab("identify")} initialQuery={shopQuery} onQueryUsed={clearShopQuery} />}
         {tab === "ask" && <Ask vehicle={active} />}

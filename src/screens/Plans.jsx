@@ -31,6 +31,12 @@ export default function Plans({ premium, signedIn, goSettings, banner, onDismiss
         </p>
       )}
 
+      {!GATING_OPEN && !buying && !premium && (
+        <p className="info-note" role="note" style={{ maxWidth: 760 }}>
+          Premium isn&rsquo;t open for purchase yet. If you&rsquo;d like early access, email <a href="mailto:support@mypartsbench.com">support@mypartsbench.com</a>.
+        </p>
+      )}
+
       {GATING_OPEN && (
         <p className="info-note" role="note" style={{ maxWidth: 760 }}>
           <strong>Everything is free for everyone right now</strong> while Parts Bench is growing. This is how the plans will be split once Premium launches.
