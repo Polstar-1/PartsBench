@@ -481,3 +481,13 @@ ul.upd-text li::before{ content:""; position:absolute; left:2px; top:0.62em; wid
 .plan-soon{ font-family:var(--font-mono); font-size:10px; letter-spacing:0.06em; text-transform:uppercase; color:var(--amber); }
 .plan-foot{ color:var(--ink-dim); font-size:13px; margin:16px 0 0; }
 @media (min-width:700px){ .plan-cards{ grid-template-columns:1fr 1fr; } .plan-table td{ width:110px; } }
+
+/* Ask answer */
+.ask-answer p{ margin:0 0 10px; line-height:1.55; }
+.ask-h{ font-family:var(--font-mono); font-size:11.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-dim); margin:16px 0 4px; font-weight:600; }
+.ask-checks{ margin:0 0 10px; padding-left:20px; line-height:1.55; }
+.ask-disclaimer{ margin-top:18px; }
+.ask-answer .chip{ cursor:default; font-size:12px; padding:5px 12px; }
+.ask-answer .chip-overdue{ color:var(--red); border-color:rgba(229,72,77,.6); background:rgba(229,72,77,.1); }
+.ask-answer .chip-soon{ color:var(--amber); border-color:rgba(224,169,59,.6); background:rgba(224,169,59,.1); }
+.ask-answer .chip-quiet{ color:var(--ink-dim); }

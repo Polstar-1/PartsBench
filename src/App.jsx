@@ -158,7 +158,7 @@ export default function App() {
             premium={premium} goPlans={() => setTab("plans")} />
         )}
         {tab === "shop" && <Shop vehicle={active} goIdentify={() => setTab("identify")} initialQuery={shopQuery} onQueryUsed={clearShopQuery} />}
-        {tab === "ask" && <Ask vehicle={active} />}
+        {tab === "ask" && <Ask vehicle={active} signedIn={!!auth.user} premium={premium} goSettings={() => setTab("settings")} goPlans={() => setTab("plans")} goShopFor={(q) => { setShopQuery(q); setTab("shop"); }} />}
         {tab === "ideas" && <Ideas auth={auth} goSettings={() => setTab("settings")} />}
         {tab === "settings" && <Settings auth={accountAuth} sync={sync} premium={premium} goPlans={() => setTab("plans")} />}
         {tab === "plans" && <Plans premium={premium} signedIn={!!auth.user} goSettings={() => setTab("settings")} banner={shownBanner} onDismissBanner={() => setBanner("")} />}
