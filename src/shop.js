@@ -2,7 +2,7 @@
 // Amazon Associates: your store tag, e.g. "partsbench-20"
 // eBay Partner Network: your campaign ID. Generate one sample link in EPN and
 // compare it with the parameters below to confirm they match.
-export const AFFILIATE = { amazonTag: "", ebayCampId: "5339243534" };
+export const AFFILIATE = { amazonTag: "partsbench-20", ebayCampId: "5339243534" };
 
 export const RETAILER_COLORS = {
   "eBay Motors": "#5b8dbe",

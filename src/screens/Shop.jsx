@@ -142,7 +142,7 @@ export default function Shop({ vehicle, goIdentify, initialQuery = "", onQueryUs
         </>
       )}
 
-      {vehicle && <p className="pdisclose" style={{ marginTop: 22 }}>Links to eBay and other stores are affiliate links. We may earn a commission when you buy, at no extra cost to you.</p>}
+      {vehicle && <p className="pdisclose" style={{ marginTop: 22 }}>Links to eBay, Amazon and other stores are affiliate links. We may earn a commission when you buy, at no extra cost to you. As an Amazon Associate we earn from qualifying purchases.</p>}
     </>
   );
 }
