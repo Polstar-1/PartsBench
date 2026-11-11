@@ -45,6 +45,7 @@ export default function App() {
   const [tab, setTab] = useState(link ? "shop" : RETURN ? "plans" : "identify");
   const [banner, setBanner] = useState(RETURN ? RETURN_TEXT[RETURN] : "");
   const [tick, setTick] = useState(0);
+  const [waited, setWaited] = useState(false); // finished checking for Premium after paying
   const [garage, setGarage] = useState(loadGarage);
   const [draft, setDraft] = useState(link ? link.vehicle : null); // a looked-up vehicle that isn't saved yet
   const [shopQuery, setShopQuery] = useState(link ? link.query : "");
@@ -83,10 +84,12 @@ export default function App() {
   useEffect(() => {
     if (RETURN !== "success" && RETURN !== "portal") return undefined;
     let n = 0;
-    const id = setInterval(() => { n += 1; setTick((t) => t + 1); if (n >= 8) clearInterval(id); }, 2500);
+    const id = setInterval(() => { n += 1; setTick((t) => t + 1); if (n >= 24) { clearInterval(id); setWaited(true); } }, 2500);
     return () => clearInterval(id);
   }, []);
-  const shownBanner = banner && RETURN === "success" && premium ? "You're Premium now. Thank you for supporting Parts Bench!" : banner;
+  const shownBanner = banner && RETURN === "success"
+    ? (premium ? "You're Premium now. Thank you for supporting Parts Bench!" : waited ? "Your payment went through, but Premium hasn't shown up yet. Please refresh the page. If it still isn't there after a few minutes, contact support." : banner)
+    : banner;
 
   const savedMatch = draft && draft.vin ? garage.vehicles.find((v) => v.vin === draft.vin) || null : null;
   const savedActive = garage.vehicles.find((v) => v.id === garage.activeId) || null;
