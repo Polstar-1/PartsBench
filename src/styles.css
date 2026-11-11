@@ -491,3 +491,28 @@ ul.upd-text li::before{ content:""; position:absolute; left:2px; top:0.62em; wid
 .ask-answer .chip-overdue{ color:var(--red); border-color:rgba(229,72,77,.6); background:rgba(229,72,77,.1); }
 .ask-answer .chip-soon{ color:var(--amber); border-color:rgba(224,169,59,.6); background:rgba(224,169,59,.1); }
 .ask-answer .chip-quiet{ color:var(--ink-dim); }
+
+/* Costs & history */
+.hist-head{ margin-bottom:14px; }
+.hist-stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:8px; }
+.hist-stat{ background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:4px; }
+.hist-k{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-dim); }
+.hist-v{ font-size:19px; font-weight:600; }
+.hist-cats,.hist-list{ list-style:none; margin:0; padding:0; }
+.hist-cats li{ margin-bottom:12px; }
+.hist-cat-row,.hist-line{ display:flex; justify-content:space-between; gap:12px; }
+.hist-bar{ height:6px; background:var(--panel-2); border-radius:4px; margin-top:5px; overflow:hidden; }
+.hist-bar span{ display:block; height:100%; background:var(--orange); border-radius:4px; }
+.hist-list li{ padding:10px 0; border-top:1px solid var(--border); }
+.hist-list li:first-child{ border-top:none; padding-top:0; }
+.hist-actions{ margin-top:6px; flex-wrap:wrap; }
+@media (max-width:420px){ .hist-v{ font-size:16px; } .hist-stat{ padding:10px; } }
+@media print{
+  body *{ visibility:hidden; }
+  .history-report,.history-report *{ visibility:visible; }
+  .history-report{ position:absolute; left:0; top:0; width:100%; background:#fff; padding:24px; }
+  .history-report,.history-report *{ color:#000 !important; background:transparent !important; border-color:#bbb !important; }
+  .history-report .hist-bar span{ background:#555 !important; }
+  .hist-actions{ display:none !important; }
+}
+.maint-layout[hidden]{ display:none; }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { canUsePremium } from "../premium";
+import History from "./History";
 import { planFor, getStatus, groupStatus, splitCost, latestEntry, todayISO, fmtDate, fmtNum, estimateMiles, manualLink, LEVEL_RANK } from "../maintenance";
 
 function LogForm({ item, vehicle, onSave, onCancel, wholeSet = 0 }) {
@@ -190,12 +191,13 @@ function GroupRow({ item, vehicle, est, onShop, open, onToggle, openKey, mode, a
   );
 }
 
-export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, goShopFor, saveDraft, premium, goPlans }) {
+export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, goShopFor, saveDraft, premium, goPlans, canAdd = true }) {
   const [openKey, setOpenKey] = useState(null);
   const [openGroup, setOpenGroup] = useState(null);
   const [allGroup, setAllGroup] = useState(null);
   const [mode, setMode] = useState("log");
   const [odo, setOdo] = useState("");
+  const [pane, setPane] = useState("schedule"); // "schedule" or "history"
 
   if (!vehicle) {
     return (
@@ -216,8 +218,17 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, goSh
         <p className="eyebrow">Maintenance</p>
         <h1 className="page-title">Keep it running.</h1>
         <div className="empty-state">
-          <p>Save your {vehicle.year} {vehicle.make} {vehicle.model} to the garage to track its maintenance.</p>
-          <button className="btn-primary" onClick={() => { saveDraft(); goGarage(); }}>Save to Garage</button>
+          {canAdd ? (
+            <>
+              <p>Save your {vehicle.year} {vehicle.make} {vehicle.model} to the garage to track its maintenance.</p>
+              <button className="btn-primary" onClick={() => { saveDraft(); goGarage(); }}>Save to Garage</button>
+            </>
+          ) : (
+            <>
+              <p>Your Garage is full. Free accounts hold two vehicles, and Premium has no limit.</p>
+              <button className="btn-primary" onClick={goPlans}>See Premium</button>
+            </>
+          )}
         </div>
       </>
     );
@@ -282,9 +293,16 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, goSh
     <>
       <p className="eyebrow">Maintenance</p>
       <h1 className="page-title">{name}</h1>
-      <p className="page-sub">Tap an item to log a service or change its interval.</p>
+      <p className="page-sub">{pane === "history" ? "What you've logged and spent on this vehicle." : "Tap an item to log a service or change its interval."}</p>
 
-      <div className="maint-layout">
+      <div className="segmented maint-views" role="tablist" aria-label="Maintenance views" style={{ maxWidth: 420, marginBottom: 16 }}>
+        <button role="tab" aria-selected={pane === "schedule"} className={"seg-btn" + (pane === "schedule" ? " active" : "")} onClick={() => setPane("schedule")}>Schedule</button>
+        <button role="tab" aria-selected={pane === "history"} className={"seg-btn" + (pane === "history" ? " active" : "")} onClick={() => setPane("history")}>Costs &amp; history</button>
+      </div>
+
+      {pane === "history" && <History vehicle={vehicle} full={full} goPlans={goPlans} />}
+
+      <div className="maint-layout" hidden={pane !== "schedule"}>
         <aside className="maint-side">
       <div className="panel">
         <label htmlFor="odo2">Current mileage</label>

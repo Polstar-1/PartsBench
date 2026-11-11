@@ -19,6 +19,11 @@ export function rowIsPremium(row, now = Date.now()) {
 // Use this to decide whether a premium feature is available right now.
 export const canUsePremium = (premium) => GATING_OPEN || !!premium;
 
+// Free accounts can keep this many vehicles; Premium has no limit. Vehicles already saved are never taken away.
+export const FREE_VEHICLES = 2;
+// premium === null means the account check hasn't finished yet, so don't block anyone in that moment.
+export const canAddVehicle = (count, premium) => premium === null || canUsePremium(premium) || count < FREE_VEHICLES;
+
 /* ============================================================
    PLANS SCREEN
    PAYMENTS_ON = false -> the buy button stays off ("coming soon").
@@ -42,7 +47,8 @@ export const FEATURES = [
     { name: "Tire, brake and shock tracking", note: "Per tire and per axle, with \u201cLog all\u201d", free: false, premium: true },
     { name: "Full maintenance schedule", note: "Fluids, belts, plugs, battery and more", free: false, premium: true },
     { name: "Intervals tuned to your vehicle", note: "Hybrid, EV and all-wheel drive adjustments", free: false, premium: true },
-    { name: "Cost totals and exportable history", free: false, premium: "soon" },
+    { name: "Cost totals and exportable history", note: "Totals, cost per mile, spending by category, CSV and print", free: false, premium: true },
+    { name: "More than two vehicles", note: "Free keeps two in the Garage", free: false, premium: true },
     { name: "Ask AI about your vehicle", free: false, premium: "soon" },
   ] },
 ];

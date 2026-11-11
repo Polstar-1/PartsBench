@@ -27,7 +27,7 @@ function SpecRow({ label, value, mono }) {
   );
 }
 
-export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, goGarage }) {
+export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, goGarage, canAdd = true, goPlans }) {
   const [entryMode, setEntryMode] = useState("vin");
   const [vinValue, setVinValue] = useState("");
   const [vinError, setVinError] = useState("");
@@ -196,11 +196,23 @@ export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, g
                   <label htmlFor="odo">Current mileage (optional)</label>
                   <input id="odo" inputMode="numeric" value={mileage} placeholder="e.g. 112000"
                     onChange={(e) => setMileage(e.target.value.replace(/[^0-9]/g, "").slice(0, 7))} />
-                  <div className="row" style={{ marginTop: 12 }}>
-                    <button className="btn-primary block" onClick={() => onSave(draft, mileage ? Number(mileage) : null)}>Save to Garage</button>
-                    <button className="btn-secondary" onClick={goShop}>Shop parts</button>
-                  </div>
-                  <p className="hint">Saving lets you track maintenance and check recalls for this vehicle.</p>
+                  {canAdd ? (
+                    <>
+                      <div className="row" style={{ marginTop: 12 }}>
+                        <button className="btn-primary block" onClick={() => onSave(draft, mileage ? Number(mileage) : null)}>Save to Garage</button>
+                        <button className="btn-secondary" onClick={goShop}>Shop parts</button>
+                      </div>
+                      <p className="hint">Saving lets you track maintenance and check recalls for this vehicle.</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="info-note" role="note" style={{ marginTop: 12 }}>
+                        Your Garage is full. Free accounts hold two vehicles, and Premium has no limit.{" "}
+                        <button className="link-btn" onClick={goPlans}>See Premium</button>
+                      </p>
+                      <div className="row"><button className="btn-secondary block" onClick={goShop}>Shop parts</button></div>
+                    </>
+                  )}
                 </>
               )}
             </div>

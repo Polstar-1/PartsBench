@@ -108,7 +108,7 @@ function VehicleCard({ v, isActive, onSelect, onUpdate, onRemove, goMaintain, go
   );
 }
 
-export default function Garage({ vehicles, activeId, onSelect, onUpdate, onRemove, goIdentify, goMaintain, goShop }) {
+export default function Garage({ vehicles, activeId, onSelect, onUpdate, onRemove, goIdentify, goMaintain, goShop, canAdd = true, goPlans }) {
   return (
     <>
       <p className="eyebrow">Garage</p>
@@ -129,8 +129,14 @@ export default function Garage({ vehicles, activeId, onSelect, onUpdate, onRemov
         ))}
       </div>
 
-      {vehicles.length > 0 && (
+      {vehicles.length > 0 && canAdd && (
         <button className="btn-secondary block-btn" onClick={goIdentify}>+ Add another vehicle</button>
+      )}
+      {vehicles.length > 0 && !canAdd && (
+        <p className="info-note" role="note">
+          Free accounts hold two vehicles. Premium has no limit, and the vehicles you have stay as they are.{" "}
+          <button className="link-btn" onClick={goPlans}>See Premium</button>
+        </p>
       )}
     </>
   );
