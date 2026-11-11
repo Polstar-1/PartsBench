@@ -57,26 +57,42 @@ export async function handleEvent(env, f, event) {
   return "saved";
 }
 
-const json = (code, body, extra) => new Response(JSON.stringify(body), { status: code, headers: { "content-type": "application/json", "cache-control": "no-store", ...extra } });
-
-// Web-standard handler: request.text() gives the exact bytes Stripe signed, which the signature check needs.
-export async function POST(request) {
-  const env = process.env;
-  if (!env.STRIPE_SECRET_KEY || !env.STRIPE_WEBHOOK_SECRET || !env.SUPABASE_SERVICE_ROLE_KEY) return json(501, { configured: false });
-
-  let raw;
-  try { raw = await request.text(); } catch { return json(400, { error: "Couldn't read the request body." }); }
-  if (raw.length > 1024 * 1024) return json(400, { error: "Too large." });
-  if (!verifySignature(raw, request.headers.get("stripe-signature"), env.STRIPE_WEBHOOK_SECRET)) return json(400, { error: "Bad signature." });
-
-  let event;
-  try { event = JSON.parse(raw); } catch { return json(400, { error: "Bad body." }); }
-  try {
-    const result = await handleEvent(env, fetch, event);
-    return json(200, { received: true, result });
-  } catch {
-    return json(500, { error: "Couldn't save that. Stripe will try again." }); // a non-200 makes Stripe retry later
+// We need the exact bytes Stripe sent to check the signature. Vercel only parses the body when req.body is
+// touched, so read the raw stream first and never look at req.body unless the stream was already used up.
+async function readRaw(req) {
+  const chunks = [];
+  let size = 0;
+  if (typeof req[Symbol.asyncIterator] === "function") {
+    for await (const c of req) {
+      size += c.length;
+      if (size > 1024 * 1024) return null;
+      chunks.push(Buffer.from(c));
+    }
   }
+  if (chunks.length) return Buffer.concat(chunks).toString("utf8");
+  if (typeof req.body === "string") return req.body;
+  if (Buffer.isBuffer(req.body)) return req.body.toString("utf8");
+  return null; // already parsed into an object: the exact bytes are gone
 }
 
-export function GET() { return json(405, { error: "Use POST." }, { allow: "POST" }); }
+export const config = { api: { bodyParser: false } };
+
+export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store");
+  if (req.method !== "POST") { res.setHeader("Allow", "POST"); return res.status(405).json({ error: "Use POST." }); }
+  const env = process.env;
+  if (!env.STRIPE_SECRET_KEY || !env.STRIPE_WEBHOOK_SECRET || !env.SUPABASE_SERVICE_ROLE_KEY) return res.status(501).json({ configured: false });
+
+  const raw = await readRaw(req);
+  if (raw == null) return res.status(400).json({ error: "Couldn't read the request body." });
+  if (!verifySignature(raw, req.headers["stripe-signature"], env.STRIPE_WEBHOOK_SECRET)) return res.status(400).json({ error: "Bad signature." });
+
+  let event;
+  try { event = JSON.parse(raw); } catch { return res.status(400).json({ error: "Bad body." }); }
+  try {
+    const result = await handleEvent(env, fetch, event);
+    return res.status(200).json({ received: true, result });
+  } catch {
+    return res.status(500).json({ error: "Couldn't save that. Stripe will try again." }); // a non-200 makes Stripe retry later
+  }
+}
