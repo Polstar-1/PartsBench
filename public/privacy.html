@@ -60,6 +60,7 @@ footer .bar{ padding:18px 20px; }
 <li>Your email address and the account name you choose. We email you a one-time sign-in code each time you sign in. There are no passwords.</li>
 <li>Your garage, which is then saved to your account so it follows you to your other devices.</li>
 <li>If you switch on maintenance reminders, that choice, and a record of which reminders we have already emailed you so you don&rsquo;t get the same one twice. We then email you at your account address when something in your garage is due. You can turn this off in Settings or with the Unsubscribe link in every reminder.</li>
+<li>If you buy Premium, Stripe handles the payment. We never see or store your card details. We keep a record of your subscription (its status, renewal date, and your Stripe customer and subscription IDs) so we can switch Premium on and off.</li>
 <li>Ideas you post on the Ideas board (title, details, type and your account name). These are public. Your votes are private; only the totals are shown.</li>
 <li>Messages you send through Contact support (the text, the topic, and your account email so we can reply). These are private.</li>
 </ul>
@@ -79,6 +80,7 @@ footer .bar{ padding:18px 20px; }
 <tr><th>Service</th><th>What it does</th></tr>
 <tr><td>Supabase</td><td>Account sign-in and our database (email, account name, garage, ideas, votes, support messages).</td></tr>
 <tr><td>Resend</td><td>Sends your sign-in code emails and, if you turn them on, maintenance reminder emails (your email address and the items that are due).</td></tr>
+<tr><td>Stripe</td><td>Processes Premium payments and subscriptions. Stripe collects your card and billing details directly, under its own privacy policy. We receive your subscription status and your email address.</td></tr>
 <tr><td>Vercel</td><td>Hosts the website and runs our server functions.</td></tr>
 <tr><td>Cloudflare</td><td>Our domain name service. If we show a bot check when you sign in, it is Cloudflare Turnstile, which looks at signals from your browser to tell people from bots.</td></tr>
 <tr><td>Google Fonts</td><td>Delivers the fonts we use. Google receives your IP address when the fonts load.</td></tr>

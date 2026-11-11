@@ -1,17 +1,35 @@
-import { FEATURES, GATING_OPEN, PAYMENTS_ON, PRICES } from "../premium";
+import { useState } from "react";
+import { FEATURES, GATING_OPEN, PRICES } from "../premium";
+import { paymentsOn, startCheckout, openPortal } from "../billing";
 
 function Cell({ v }) {
   if (v === "soon") return <span className="plan-soon">Soon</span>;
   return v ? <span className="plan-yes" role="img" aria-label="Included">{"✓"}</span> : <span className="plan-no" role="img" aria-label="Not included">{"–"}</span>;
 }
 
-export default function Plans({ premium, signedIn, goSettings }) {
+export default function Plans({ premium, signedIn, goSettings, banner, onDismissBanner }) {
   const priced = PRICES.monthly || PRICES.yearly;
+  const buying = paymentsOn();
+  const [busy, setBusy] = useState("");
+  const [err, setErr] = useState("");
+
+  async function go(kind, fn) {
+    setBusy(kind); setErr("");
+    const r = await fn();
+    if (r.url) { window.location.assign(r.url); return; }
+    setErr(r.error); setBusy("");
+  }
   return (
     <>
       <p className="eyebrow">Plans</p>
       <h1 className="page-title">Free and Premium.</h1>
       <p className="page-sub">The basics are free. Premium adds the tools for keeping a vehicle on schedule.</p>
+
+      {banner && (
+        <p className="info-note" role="status" style={{ maxWidth: 760 }}>
+          {banner} <button className="link-btn" onClick={onDismissBanner}>Dismiss</button>
+        </p>
+      )}
 
       {GATING_OPEN && (
         <p className="info-note" role="note" style={{ maxWidth: 760 }}>
@@ -34,9 +52,30 @@ export default function Plans({ premium, signedIn, goSettings }) {
               : <span className="plan-soonprice">Pricing coming soon</span>}
           </p>
           <p className="plan-tag">Reminders and the full tracker, so nothing gets missed.</p>
-          {premium
-            ? <p className="plan-state plan-have">You have Premium {"✓"}</p>
-            : <button className="btn-primary block" disabled={!PAYMENTS_ON}>{PAYMENTS_ON ? "Go Premium" : "Go Premium – coming soon"}</button>}
+          {premium && (
+            <>
+              <p className="plan-state plan-have">You have Premium {"✓"}</p>
+              {buying && <button className="btn-secondary block" disabled={!!busy} onClick={() => go("portal", openPortal)}>{busy === "portal" ? "Opening…" : "Manage subscription"}</button>}
+            </>
+          )}
+          {!premium && !buying && <button className="btn-primary block" disabled>Go Premium – coming soon</button>}
+          {!premium && buying && !signedIn && (
+            <p className="plan-state">Sign in from <button className="link-btn" onClick={goSettings}>Settings</button> to go Premium.</p>
+          )}
+          {!premium && buying && signedIn && (
+            <>
+              <button className="btn-primary block" disabled={!!busy} onClick={() => go("yearly", () => startCheckout("yearly"))}>
+                {busy === "yearly" ? "Opening checkout…" : "Go Premium – yearly" + (PRICES.yearly ? " " + PRICES.yearly : "")}
+              </button>
+              <button className="btn-secondary block" style={{ marginTop: 8 }} disabled={!!busy} onClick={() => go("monthly", () => startCheckout("monthly"))}>
+                {busy === "monthly" ? "Opening checkout…" : "Go Premium – monthly" + (PRICES.monthly ? " " + PRICES.monthly : "")}
+              </button>
+              <p className="plan-fine">
+                Renews automatically until you cancel. Cancel any time under Manage subscription. Payments are handled by Stripe; Parts Bench never sees your card. See the <a href="/terms">Terms</a>.
+              </p>
+            </>
+          )}
+          {err && <p className="plan-err" role="alert">{err}</p>}
         </section>
       </div>
 

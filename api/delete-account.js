@@ -2,10 +2,13 @@
 // Deleting an account needs Supabase's secret key, which must never be in the app itself.
 // It lives ONLY in Vercel's environment variables:
 //   SUPABASE_SERVICE_ROLE_KEY   (required; the "secret" key from Supabase > Project Settings > API Keys)
+//   STRIPE_SECRET_KEY           (only if Premium is for sale: a paid subscription is cancelled first, so nobody keeps being billed)
 // With no key set it answers { configured: false } and the app says deletion isn't switched on.
 //
 // The person's Garage is stored in a table that is linked to their account, so it is
 // deleted together with the account.
+
+import { cancelSubscription } from "./_lib/stripe.js";
 
 const BASE = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://zlfbryvyrrjfhmsreiwz.supabase.co").replace(/\/$/, "");
 // The public key is safe to include: it is the same one the app itself uses.
@@ -39,6 +42,18 @@ export default async function handler(req, res) {
 
   const headers = { apikey: secret, "content-type": "application/json" };
   if (secret.startsWith("eyJ")) headers.Authorization = "Bearer " + secret; // older-style keys also go here
+  // A paid subscription has to stop first, or the card would keep being charged for an account that no longer exists.
+  if (process.env.STRIPE_SECRET_KEY) {
+    try {
+      const r = await fetch(BASE + "/rest/v1/premium?select=stripe_subscription&user_id=eq." + encodeURIComponent(user.id), { headers });
+      const row = r.ok ? (await r.json())[0] : null;
+      if (row && row.stripe_subscription && !(await cancelSubscription(process.env, fetch, row.stripe_subscription))) {
+        return res.status(502).json({ code: "cancel-sub", error: "Your subscription couldn't be cancelled, so the account was not deleted. Open Settings > Manage subscription to cancel it, then try again." });
+      }
+    } catch {
+      return res.status(502).json({ code: "cancel-network", error: "Couldn't reach the payment service, so the account was not deleted. Try again." });
+    }
+  }
   try {
     const del = await fetch(BASE + "/auth/v1/admin/users/" + encodeURIComponent(user.id), {
       method: "DELETE",

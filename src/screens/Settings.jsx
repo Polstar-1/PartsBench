@@ -252,7 +252,7 @@ export default function Settings({ auth, sync, premium, goPlans }) {
         <div className="panel">
           <p className="section-title" style={{ marginBottom: 6 }}>Your plan: {premium ? "Premium" : "Free"}</p>
           <p className="settings-hint" style={{ marginBottom: 14 }}>See what's included with Free and with Premium.</p>
-          <button className="btn-secondary" onClick={goPlans}>Compare plans</button>
+          <button className="btn-secondary" onClick={goPlans}>{premium ? "Plan & billing" : "Compare plans"}</button>
         </div>
         {!auth.configured && (
           <div className="panel">

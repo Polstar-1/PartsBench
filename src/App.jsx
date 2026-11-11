@@ -16,6 +16,19 @@ import { loadGarage, saveGarage, newId } from "./storage";
 import { readDeepLink } from "./deeplink";
 import { withReading } from "./maintenance";
 import Updates from "./Updates";
+import { rememberTestMode } from "./billing";
+
+// Coming back from Stripe: ?checkout=success | cancel | portal
+const RETURN = (() => {
+  rememberTestMode(window.location.search);
+  const v = new URLSearchParams(window.location.search).get("checkout");
+  return v === "success" || v === "cancel" || v === "portal" ? v : null;
+})();
+const RETURN_TEXT = {
+  success: "Thanks! Your payment went through. Premium switches on in a few seconds.",
+  cancel: "Checkout cancelled. You weren't charged.",
+  portal: "",
+};
 
 const TABS = [
   { key: "identify", label: "Identify", icon: "search" },
@@ -29,14 +42,16 @@ const TABS = [
 export default function App() {
   // Arriving from one of our search pages: open straight to Shop for that vehicle and part.
   const [link] = useState(() => readDeepLink(window.location.search));
-  const [tab, setTab] = useState(link ? "shop" : "identify");
+  const [tab, setTab] = useState(link ? "shop" : RETURN ? "plans" : "identify");
+  const [banner, setBanner] = useState(RETURN ? RETURN_TEXT[RETURN] : "");
+  const [tick, setTick] = useState(0);
   const [garage, setGarage] = useState(loadGarage);
   const [draft, setDraft] = useState(link ? link.vehicle : null); // a looked-up vehicle that isn't saved yet
   const [shopQuery, setShopQuery] = useState(link ? link.query : "");
   const clearShopQuery = useCallback(() => setShopQuery(""), []);
   const auth = useAuth();
   const sync = useGarageSync(auth.user, garage, setGarage);
-  const premium = usePremium(auth.user);
+  const premium = usePremium(auth.user, tick);
 
   // Signing out uploads anything still waiting, then empties this device's Garage
   // so the next person to sign in here never sees these vehicles.
@@ -62,7 +77,16 @@ export default function App() {
 
   useEffect(() => { saveGarage(garage); }, [garage]);
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
-  useEffect(() => { if (link) window.history.replaceState(null, "", "/"); }, [link]);
+  useEffect(() => { if (link || RETURN) window.history.replaceState(null, "", "/"); }, [link]);
+
+  // After paying, Stripe tells our server a moment later, so check a few times until Premium shows up.
+  useEffect(() => {
+    if (RETURN !== "success" && RETURN !== "portal") return undefined;
+    let n = 0;
+    const id = setInterval(() => { n += 1; setTick((t) => t + 1); if (n >= 8) clearInterval(id); }, 2500);
+    return () => clearInterval(id);
+  }, []);
+  const shownBanner = banner && RETURN === "success" && premium ? "You're Premium now. Thank you for supporting Parts Bench!" : banner;
 
   const savedMatch = draft && draft.vin ? garage.vehicles.find((v) => v.vin === draft.vin) || null : null;
   const savedActive = garage.vehicles.find((v) => v.id === garage.activeId) || null;
@@ -133,7 +157,7 @@ export default function App() {
         {tab === "ask" && <Ask vehicle={active} />}
         {tab === "ideas" && <Ideas auth={auth} goSettings={() => setTab("settings")} />}
         {tab === "settings" && <Settings auth={accountAuth} sync={sync} premium={premium} goPlans={() => setTab("plans")} />}
-        {tab === "plans" && <Plans premium={premium} signedIn={!!auth.user} goSettings={() => setTab("settings")} />}
+        {tab === "plans" && <Plans premium={premium} signedIn={!!auth.user} goSettings={() => setTab("settings")} banner={shownBanner} onDismissBanner={() => setBanner("")} />}
       </main>
 
       <nav className="tabbar" aria-label="Main">
