@@ -68,7 +68,9 @@ select:disabled, input:disabled, textarea:disabled{ opacity:0.4; }
 
 /* ---------- vehicle stage ---------- */
 .stage{ position:relative; background:radial-gradient(circle at 50% 35%, #1d2733, var(--panel) 72%); border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-bottom:18px; padding:18px 10px 0; }
-.stage-svg{ width:100%; height:auto; display:block; overflow:visible; }
+.stage-art{ position:relative; width:100%; aspect-ratio:1000/354; }
+.stage-art .veh{ position:absolute; inset:0; background:var(--blue); -webkit-mask-size:100% 100%; mask-size:100% 100%; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; }
+.mini-art{ width:100%; aspect-ratio:1000/354; background:var(--blue); -webkit-mask-size:100% 100%; mask-size:100% 100%; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; }
 .veh{ opacity:0; transition:opacity .12s ease; }
 .veh.active{ opacity:1; }
 .stage.idle .veh{ transition:opacity .7s ease; }
@@ -87,8 +89,7 @@ select:disabled, input:disabled, textarea:disabled{ opacity:0.4; }
 .hub{ fill:var(--blue); }
 .shadow{ fill:rgba(0,0,0,.35); }
 .ground{ stroke:var(--blue); stroke-width:1; opacity:.25; }
-.stage.done .stage-svg{ filter:drop-shadow(0 0 5px rgba(91,141,190,.5)); }
-.stage-svg.busy .spokes{ animation:spin .45s linear infinite; }
+.stage.done .stage-art{ filter:drop-shadow(0 0 5px rgba(91,141,190,.5)); }
 @keyframes spin{ to{ transform:rotate(360deg); } }
 
 .stage-label{ text-align:center; margin-top:6px; font-family:var(--font-mono); font-size:12px; letter-spacing:0.18em; text-transform:uppercase; color:var(--blue); }
@@ -109,9 +110,6 @@ select:disabled, input:disabled, textarea:disabled{ opacity:0.4; }
 .stage.scan .stage-sweep, .stage.land .stage-sweep{ opacity:1; animation:sweepx 1.8s linear infinite; }
 @keyframes sweepx{ to{ transform:translateX(560px); } }
 
-.mini-svg{ width:100%; height:auto; display:block; }
-.mini-svg .body{ stroke-width:2.6; }
-.mini-svg .tire{ stroke-width:2.6; }
 
 /* ---------- spec plate ---------- */
 .spec-plate{ position:relative; padding:22px 20px; border-radius:8px;
@@ -229,7 +227,7 @@ select:disabled, input:disabled, textarea:disabled{ opacity:0.4; }
 .tab-item-label{ font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.05em; text-transform:uppercase; }
 
 @media (prefers-reduced-motion:reduce){
-  .stage-svg.busy .spokes, .stage-sweep, .stage-status.pulse{ animation:none !important; }
+  .stage-sweep, .stage-status.pulse{ animation:none !important; }
   .veh{ transition:none; }
 }
 
