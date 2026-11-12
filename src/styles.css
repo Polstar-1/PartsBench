@@ -516,3 +516,11 @@ ul.upd-text li::before{ content:""; position:absolute; left:2px; top:0.62em; wid
   .hist-actions{ display:none !important; }
 }
 .maint-layout[hidden]{ display:none; }
+
+/* Signed-in greeting and signed-out nudge */
+.welcome{ margin:0 0 14px; font-size:14px; color:var(--ink-dim); }
+.welcome strong{ color:var(--ink); font-weight:600; }
+.signed-out-note{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 16px; padding:9px 12px; font-size:13px; line-height:1.4; color:var(--ink-dim); background:var(--panel-2); border:1px solid var(--border); border-left:2px solid var(--orange); border-radius:6px; }
+.signed-out-actions{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.signed-out-x{ background:transparent; border:none; color:var(--ink-dim); font-size:20px; line-height:1; padding:2px 4px; cursor:pointer; }
+.signed-out-x:hover{ color:var(--ink); }

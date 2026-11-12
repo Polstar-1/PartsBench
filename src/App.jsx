@@ -17,6 +17,8 @@ import { loadGarage, saveGarage, newId } from "./storage";
 import { readDeepLink } from "./deeplink";
 import { withReading } from "./maintenance";
 import Updates from "./Updates";
+import AccountNotice from "./AccountNotice";
+import { rememberAccount } from "./accountMemory";
 import { rememberTestMode } from "./billing";
 
 // Coming back from Stripe: ?checkout=success | cancel | portal
@@ -62,6 +64,7 @@ export default function App() {
     signOut: async () => {
       await sync.flush();
       const r = await auth.signOut();
+      rememberAccount(false); // signing out on purpose: no "you're signed out" reminder afterwards
       sync.clearLocal();
       setDraft(null);
       return r;
@@ -70,6 +73,7 @@ export default function App() {
     deleteAccount: async () => {
       const r = await auth.deleteAccount();
       if (!r.error) {
+        rememberAccount(false);
         sync.clearLocal();
         setDraft(null);
       }
@@ -78,6 +82,7 @@ export default function App() {
   };
 
   useEffect(() => { saveGarage(garage); }, [garage]);
+  useEffect(() => { if (auth.user) rememberAccount(true); }, [auth.user]);
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
   useEffect(() => { if (link || RETURN) window.history.replaceState(null, "", "/"); }, [link]);
 
@@ -144,6 +149,9 @@ export default function App() {
       </header>
 
       <main className="content">
+        {(tab === "identify" || tab === "garage" || tab === "maintain") && (
+          <AccountNotice auth={auth} tab={tab} hasVehicles={garage.vehicles.length > 0} goSettings={() => setTab("settings")} />
+        )}
         {tab === "identify" && (
           <Identify draft={draft} savedMatch={savedMatch}
             onDraft={setDraft} onSave={saveVehicle} canAdd={canAdd} goPlans={() => setTab("plans")}

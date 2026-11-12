@@ -1,0 +1,113 @@
+PARTS BENCH - DESCRIPTIONS (short and long)
+Website: https://www.mypartsbench.com
+Support: support@mypartsbench.com
+Written Nov 2026. Update the feature notes below as things change.
+
+NOTES BEFORE YOU PASTE
+- Premium is not open for purchase yet. Payments and the "Ask" tab are built but switched off.
+  Don't advertise Ask or paid signup until they are live.
+- Some store links are affiliate links (eBay Partner Network, Amazon Associates). Always say so when promoting.
+- Amazon requires this exact line wherever you talk about earning from Amazon links:
+  "As an Amazon Associate I earn from qualifying purchases."
+
+======================================================================
+NAME AND TAGLINES (pick one)
+======================================================================
+Name: Parts Bench
+
+Taglines:
+- Know your vehicle. Keep it running. Find the right part.
+- Your garage, your maintenance, your parts. In one place.
+- Look up your VIN, track what's due, shop the right parts.
+- The free maintenance tracker and parts finder for people who work on their own vehicles.
+
+======================================================================
+ONE-LINER (under 60 characters)
+======================================================================
+Free vehicle maintenance tracker and parts finder.
+
+======================================================================
+SHORT (about 100 characters)
+======================================================================
+Look up your VIN, track maintenance, and find the right parts. Free for DIY and everyday drivers.
+
+======================================================================
+SOCIAL BIO / PROFILE (under 160 characters)
+======================================================================
+Free vehicle maintenance tracker and parts finder. Decode your VIN, see what's due, shop the right parts. mypartsbench.com
+
+======================================================================
+MEDIUM (about 300 characters)
+======================================================================
+Parts Bench is a free web app for vehicle owners. Enter your VIN and it fills in your vehicle, shows safety recalls, tracks the maintenance that's due, and links you to the right parts at stores like eBay and Amazon. Save your vehicles in a Garage and keep every service record in one place.
+
+======================================================================
+LONG (about 1,000 characters)
+======================================================================
+Parts Bench is a free vehicle maintenance, garage and parts app for people who work on their own cars, trucks and SUVs, and for anyone who wants to stay on top of upkeep.
+
+Enter a VIN and Parts Bench identifies the vehicle and checks it for safety recalls. Save vehicles to your Garage and the app builds a maintenance schedule for each one: oil and filter, tire rotation, air filters, wipers, and more. Log each service with the date, mileage, cost and notes, and Parts Bench shows what is overdue and what is coming up. Your mileage is estimated between updates so due dates stay accurate.
+
+When something is due, tap through to Shop. Parts Bench searches live listings and links you to the right parts for your exact vehicle at eBay, Amazon and other stores.
+
+Parts Bench is free to use. A Premium plan adds the full maintenance schedule, per-tire and per-axle tracking, intervals tuned to hybrids, EVs and all-wheel drive, email reminders, cost totals and a printable service history, and unlimited vehicles.
+
+Some store links are affiliate links. We may earn a commission at no extra cost to you. As an Amazon Associate we earn from qualifying purchases.
+
+======================================================================
+FEATURE LIST
+======================================================================
+Free
+- VIN decoder (year, make, model, engine, drive type)
+- Safety recall lookup
+- Garage: save up to two vehicles
+- Basic maintenance tracker: oil and filter, tire rotation, air filters, wiper blades
+- Parts shop with live eBay listings and links to other stores
+- Part pages that Google can find (/parts)
+
+Premium (not open for purchase yet)
+- Full maintenance schedule: fluids, belts, spark plugs, battery and more
+- Tire, brake and shock tracking, per tire and per axle
+- Intervals tuned to your vehicle (hybrid, EV, all-wheel drive)
+- Email reminders when maintenance is due
+- Costs and history: totals, cost per mile, spending by category, spreadsheet download and print/PDF
+- Unlimited vehicles in the Garage
+
+Built but not switched on yet
+- Ask: describe a problem and get a plain-English answer (likely cause, why, how to prevent it, the part to buy)
+
+======================================================================
+USE-SPECIFIC TEXT
+======================================================================
+
+STRIPE (business description / what you sell)
+Parts Bench is a web app that helps vehicle owners track maintenance, manage a digital garage and find replacement parts. Premium is a monthly or yearly subscription that adds the full maintenance schedule, email reminders, cost and service history reports, and unlimited vehicles.
+
+STRIPE (statement descriptor, 22 characters max)
+PARTS BENCH
+
+AMAZON ASSOCIATES (site description)
+Parts Bench is a free web app (mypartsbench.com) for vehicle owners. People look up their vehicle by VIN, see what maintenance is due, keep a garage of their cars, and find the right replacement parts. The app links to parts and maintenance supplies on retailers like Amazon and eBay.
+
+EBAY PARTNER NETWORK (site description)
+Parts Bench helps vehicle owners identify their vehicle by VIN, track maintenance and find the right replacement parts. Part searches link to matching listings on eBay.
+
+REDDIT POST (read each subreddit's rules first; many ban self-promotion)
+Title: I built a free maintenance tracker + parts finder for DIY car owners, and I'd like honest feedback
+
+I'm a hands-on mechanic who got tired of keeping service records in notes and spreadsheets, so I built Parts Bench (mypartsbench.com). Punch in your VIN, it fills in your vehicle, tracks what's due, and links you to the right parts. It's free to use, and a few extras are paid. I made it, and some store links are affiliate links, so I may earn a small commission.
+
+What's confusing? What's missing? Genuinely want to know before I build more.
+
+EMAIL SIGNATURE
+Parts Bench - free vehicle maintenance tracker and parts finder
+mypartsbench.com | support@mypartsbench.com
+
+APP STORE STYLE SUBTITLE (30 characters)
+Maintenance and parts finder
+
+SEARCH / META DESCRIPTION (under 160 characters)
+Free vehicle maintenance tracker, VIN decoder and parts finder. See what's due, check recalls and find the right parts for your car or truck.
+
+HASHTAGS (if you use them)
+#carmaintenance #DIYmechanic #cartok #autorepair #vehiclemaintenance
