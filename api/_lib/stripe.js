@@ -1,7 +1,7 @@
 // Small helpers for talking to Stripe without any extra packages.
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-export const SITE = "https://mypartsbench.com";
+export const SITE = "https://www.mypartsbench.com";
 export const GRACE_DAYS = 3; // keep Premium a few days past the paid period so a late webhook never cuts anyone off
 
 // Stripe wants forms like  line_items[0][price]=price_123  not JSON.

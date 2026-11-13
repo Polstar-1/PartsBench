@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { planFor, getStatus, estimateMiles, todayISO } from "../../src/maintenance.js";
 import { esc } from "./html.js";
 
-export const SITE = "https://mypartsbench.com";
+export const SITE = "https://www.mypartsbench.com";
 const SAFE = /^[A-Za-z0-9 .'&/-]{1,40}$/; // same rule the app uses for links into it
 
 /* ---------- what is due ---------- */

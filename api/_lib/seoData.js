@@ -2,7 +2,7 @@
 // Files starting with "_" inside api/ are NOT turned into web endpoints by Vercel.
 import { CATALOG } from "../../src/catalog.js";
 
-export const SITE = "https://mypartsbench.com";
+export const SITE = "https://www.mypartsbench.com";
 
 export const slugify = (s) => String(s).toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
