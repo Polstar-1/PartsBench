@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import Turnstile from "../Turnstile";
 import { SITE_KEY } from "../captcha";
 import Reminders from "./Reminders";
+import { useUnits } from "../useUnits";
+import { setUnits } from "../units";
 
 function useCooldown() {
   const [secs, setSecs] = useState(0);
@@ -237,6 +239,20 @@ function DeleteAccount({ auth }) {
   );
 }
 
+function UnitsPanel() {
+  const units = useUnits();
+  return (
+    <div className="panel">
+      <p className="section-title" style={{ marginBottom: 6 }}>Units</p>
+      <p className="settings-hint" style={{ marginBottom: 12 }}>Show distances in miles or kilometers. Your saved numbers don't change, only how they're shown and typed in.</p>
+      <div className="segmented" role="group" aria-label="Units">
+        <button type="button" className={"seg-btn" + (units === "imperial" ? " active" : "")} aria-pressed={units === "imperial"} onClick={() => setUnits("imperial")}>Imperial (mi)</button>
+        <button type="button" className={"seg-btn" + (units === "metric" ? " active" : "")} aria-pressed={units === "metric"} onClick={() => setUnits("metric")}>Metric (km)</button>
+      </div>
+    </div>
+  );
+}
+
 export default function Settings({ auth, sync, premium, goPlans }) {
   return (
     <>
@@ -254,6 +270,7 @@ export default function Settings({ auth, sync, premium, goPlans }) {
           <p className="settings-hint" style={{ marginBottom: 14 }}>See what's included with Free and with Premium.</p>
           <button className="btn-secondary" onClick={goPlans}>{premium ? "Plan & billing" : "Compare plans"}</button>
         </div>
+        <UnitsPanel />
         {!auth.configured && (
           <div className="panel">
             <p className="section-title" style={{ marginBottom: 6 }}>Accounts aren't switched on</p>

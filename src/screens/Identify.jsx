@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import VehicleStage from "../VehicleStage";
+import { useUnits } from "../useUnits";
+import { fromInput, distWord } from "../units";
 import { decodeVin, getModels, getMakes, FALLBACK_MAKES } from "../nhtsa";
 
 const CURRENT_YEAR = new Date().getFullYear() + 1;
@@ -28,6 +30,7 @@ function SpecRow({ label, value, mono }) {
 }
 
 export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, goGarage, canAdd = true, goPlans }) {
+  useUnits();
   const [entryMode, setEntryMode] = useState("vin");
   const [vinValue, setVinValue] = useState("");
   const [vinError, setVinError] = useState("");
@@ -193,13 +196,13 @@ export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, g
                 </>
               ) : (
                 <>
-                  <label htmlFor="odo">Current mileage (optional)</label>
-                  <input id="odo" inputMode="numeric" value={mileage} placeholder="e.g. 112000"
+                  <label htmlFor="odo">{distWord() === "miles" ? "Current mileage (optional)" : "Current odometer, km (optional)"}</label>
+                  <input id="odo" inputMode="numeric" value={mileage} placeholder={distWord() === "miles" ? "e.g. 112000" : "e.g. 180000"}
                     onChange={(e) => setMileage(e.target.value.replace(/[^0-9]/g, "").slice(0, 7))} />
                   {canAdd ? (
                     <>
                       <div className="row" style={{ marginTop: 12 }}>
-                        <button className="btn-primary block" onClick={() => onSave(draft, mileage ? Number(mileage) : null)}>Save to Garage</button>
+                        <button className="btn-primary block" onClick={() => onSave(draft, mileage ? fromInput(mileage) : null)}>Save to Garage</button>
                         <button className="btn-secondary" onClick={goShop}>Shop parts</button>
                       </div>
                       <p className="hint">Saving lets you track maintenance and check recalls for this vehicle.</p>

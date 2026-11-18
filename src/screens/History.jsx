@@ -1,5 +1,7 @@
 import { historyFor, summarize, toCsv, money, fileSafe } from "../history";
-import { todayISO, fmtDate, fmtNum } from "../maintenance";
+import { todayISO, fmtDate } from "../maintenance";
+import { useUnits } from "../useUnits";
+import { fmtDist, fmtDistU, perDist, distUnit, distWord } from "../units";
 
 function download(name, text, type) {
   const url = URL.createObjectURL(new Blob([text], { type }));
@@ -10,6 +12,7 @@ function download(name, text, type) {
 }
 
 export default function History({ vehicle, full, goPlans }) {
+  useUnits();
   const entries = historyFor(vehicle);
   const name = [vehicle.year, vehicle.make, vehicle.model, vehicle.trim].filter(Boolean).join(" ");
 
@@ -18,7 +21,7 @@ export default function History({ vehicle, full, goPlans }) {
       <section className="panel maint-locked" aria-labelledby="hist-locked-h">
         <p id="hist-locked-h" className="section-title" style={{ marginBottom: 6 }}>Costs and service history are Premium</p>
         <p className="settings-hint" style={{ marginBottom: 14 }}>
-          See what you've spent on this vehicle: totals, cost per mile, spending by category, and a record you can download or print for a sale or a warranty claim.
+          See what you've spent on this vehicle: totals, cost per {distUnit() === "km" ? "km" : "mile"}, spending by category, and a record you can download or print for a sale or a warranty claim.
           {entries.length > 0 ? " The " + entries.length + (entries.length === 1 ? " service" : " services") + " you've already logged " + (entries.length === 1 ? "is" : "are") + " kept, and will show up here with Premium." : " Anything you log from now on is kept."}
         </p>
         <button className="btn-secondary" onClick={goPlans}>See Premium</button>
@@ -47,10 +50,10 @@ export default function History({ vehicle, full, goPlans }) {
       <div className="hist-stats">
         <div className="hist-stat"><span className="hist-k">Total spent</span><span className="hist-v">{money(s.total)}</span></div>
         <div className="hist-stat"><span className="hist-k">Last 12 months</span><span className="hist-v">{money(s.lastYear)}</span></div>
-        <div className="hist-stat"><span className="hist-k">Cost per mile</span><span className="hist-v">{s.perMile != null ? "$" + s.perMile.toFixed(3) : "–"}</span></div>
+        <div className="hist-stat"><span className="hist-k">Cost per {distUnit() === "km" ? "km" : "mile"}</span><span className="hist-v">{s.perMile != null ? "$" + perDist(s.perMile).toFixed(3) : "–"}</span></div>
       </div>
-      {s.perMile == null && s.total > 0 && <p className="hint">Cost per mile shows once your history covers at least 1,000 miles.</p>}
-      {s.span >= 1000 && <p className="hint">Based on {fmtNum(s.span)} miles between your first and latest logged service.</p>}
+      {s.perMile == null && s.total > 0 && <p className="hint">Cost per {distUnit() === "km" ? "km" : "mile"} shows once your history covers at least {fmtDist(1000)} {distWord()}.</p>}
+      {s.span >= 1000 && <p className="hint">Based on {fmtDist(s.span)} {distWord()} between your first and latest logged service.</p>}
       {s.costed < s.count && <p className="hint">{s.count - s.costed} of {s.count} logged {s.count - s.costed === 1 ? "service has" : "services have"} no cost, so totals only count the ones that do.</p>}
 
       {s.byGroup.length > 0 && (
@@ -74,7 +77,7 @@ export default function History({ vehicle, full, goPlans }) {
             <li key={e.id + e.key}>
               <div className="hist-line"><strong>{e.label}</strong><span>{e.cost != null ? money(e.cost) : "–"}</span></div>
               <div className="hint" style={{ margin: 0 }}>
-                {fmtDate(e.date)}{e.mileage != null ? " · " + fmtNum(e.mileage) + " mi" : ""}{e.notes ? " · " + e.notes : ""}
+                {fmtDate(e.date)}{e.mileage != null ? " · " + fmtDistU(e.mileage) : ""}{e.notes ? " · " + e.notes : ""}
               </div>
             </li>
           ))}

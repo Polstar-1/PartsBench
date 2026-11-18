@@ -4,6 +4,7 @@
    Every logged service already carries its date, mileage, cost and notes.
    ============================================================ */
 import { planFor, fmtDate } from "./maintenance.js";
+import { toDisp, distUnit } from "./units.js";
 
 // key -> { label, group } for every item and every part (e.g. "tire-df" -> "Tires: Driver front", group "Tires").
 function lookup(vehicle) {
@@ -76,8 +77,8 @@ function field(v) {
 }
 
 export function toCsv(vehicle, entries) {
-  const head = ["Date", "Service", "Mileage", "Cost", "Notes"];
-  const rows = entries.map((e) => [e.date, e.label, e.mileage == null ? "" : e.mileage, e.cost == null ? "" : e.cost.toFixed(2), e.notes]);
+  const head = ["Date", "Service", distUnit() === "km" ? "Mileage (km)" : "Mileage", "Cost", "Notes"];
+  const rows = entries.map((e) => [e.date, e.label, e.mileage == null ? "" : toDisp(e.mileage), e.cost == null ? "" : e.cost.toFixed(2), e.notes]);
   const title = vehicle ? [vehicle.year, vehicle.make, vehicle.model, vehicle.trim].filter(Boolean).join(" ") : "";
   const lines = ['Parts Bench service history' + (title ? " - " + title : "") + (vehicle && vehicle.vin ? " - VIN " + vehicle.vin : "")];
   // The title line is one cell, quoted, so it can't be read as a formula either.

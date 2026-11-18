@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { canUsePremium } from "../premium";
 import History from "./History";
+import { useUnits } from "../useUnits";
+import { toDisp, fromInput, fmtDistU, fmtInterval, niceInterval, distUnit, distWord, localizeText } from "../units";
 import { planFor, getStatus, groupStatus, splitCost, latestEntry, todayISO, fmtDate, fmtNum, estimateMiles, manualLink, LEVEL_RANK } from "../maintenance";
 
 function LogForm({ item, vehicle, onSave, onCancel, wholeSet = 0 }) {
   const [date, setDate] = useState(todayISO());
-  const [miles, setMiles] = useState(vehicle.mileage != null ? String(vehicle.mileage) : "");
+  const [miles, setMiles] = useState(vehicle.mileage != null ? String(toDisp(vehicle.mileage)) : "");
   const [cost, setCost] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -13,7 +15,7 @@ function LogForm({ item, vehicle, onSave, onCancel, wholeSet = 0 }) {
     onSave(item.key, {
       id: Date.now().toString(36),
       date: date || todayISO(),
-      mileage: miles === "" ? null : Number(miles),
+      mileage: fromInput(miles),
       cost: cost === "" ? null : Number(cost),
       notes: notes.trim(),
     });
@@ -27,8 +29,8 @@ function LogForm({ item, vehicle, onSave, onCancel, wholeSet = 0 }) {
           <input id={"d-" + item.key} type="date" value={date} max={todayISO()} onChange={(e) => setDate(e.target.value)} />
         </div>
         <div>
-          <label htmlFor={"m-" + item.key}>Mileage</label>
-          <input id={"m-" + item.key} inputMode="numeric" value={miles} placeholder="miles"
+          <label htmlFor={"m-" + item.key}>{distWord().charAt(0).toUpperCase() + distWord().slice(1)}</label>
+          <input id={"m-" + item.key} inputMode="numeric" value={miles} placeholder={distWord()}
             onChange={(e) => setMiles(e.target.value.replace(/[^0-9]/g, "").slice(0, 7))} />
         </div>
       </div>
@@ -52,14 +54,15 @@ function LogForm({ item, vehicle, onSave, onCancel, wholeSet = 0 }) {
 }
 
 function IntervalForm({ item, onSave, onReset, onCancel }) {
-  const [miles, setMiles] = useState(item.miles ? String(item.miles) : "");
+  const [miles, setMiles] = useState(item.miles ? String(niceInterval(item.miles)) : "");
   const [months, setMonths] = useState(item.months ? String(item.months) : "");
   const num = (s) => (s === "" ? null : Number(s));
+  const miles2 = (s) => (s === "" ? null : fromInput(s));
   return (
     <div className="logform">
       <div className="grid2b">
         <div>
-          <label htmlFor={"im-" + item.key}>Every (miles)</label>
+          <label htmlFor={"im-" + item.key}>Every ({distWord()})</label>
           <input id={"im-" + item.key} inputMode="numeric" value={miles} placeholder="none"
             onChange={(e) => setMiles(e.target.value.replace(/[^0-9]/g, "").slice(0, 7))} />
         </div>
@@ -70,7 +73,7 @@ function IntervalForm({ item, onSave, onReset, onCancel }) {
         </div>
       </div>
       <div className="row">
-        <button className="btn-primary block" onClick={() => onSave(item.key, { miles: num(miles), months: num(months) })}>Save interval</button>
+        <button className="btn-primary block" onClick={() => onSave(item.key, { miles: miles2(miles), months: num(months) })}>Save interval</button>
         {item.customized && <button className="btn-secondary" onClick={() => onReset(item.key)}>Reset</button>}
         <button className="btn-secondary" onClick={onCancel}>Cancel</button>
       </div>
@@ -87,7 +90,7 @@ function Row({ item, vehicle, est, open, mode, onOpen, onClose, onLog, onDeleteE
   const entries = (vehicle.log || {})[item.key] || [];
   const st = getStatus(item, entries, vehicle.mileage, undefined, est);
   const last = latestEntry(entries);
-  const every = [item.miles ? fmtNum(item.miles) + " mi" : "", item.months ? item.months + " mo" : ""].filter(Boolean).join(" / ");
+  const every = [item.miles ? fmtInterval(item.miles) + " " + distUnit() : "", item.months ? item.months + " mo" : ""].filter(Boolean).join(" / ");
 
   return (
     <div className={"mrow " + st.level}>
@@ -105,9 +108,9 @@ function Row({ item, vehicle, est, open, mode, onOpen, onClose, onLog, onDeleteE
 
       {open && (
         <div className="mrow-body">
-          {item.note && <p className="hint" style={{ marginTop: 0 }}>{item.note}</p>}
+          {item.note && <p className="hint" style={{ marginTop: 0 }}>{localizeText(item.note)}</p>}
           {item.reason && <p className="hint tuned">Adjusted for your vehicle: {item.reason}</p>}
-          {last && <p className="hint">Last done: {last.mileage != null ? fmtNum(last.mileage) + " mi · " : ""}{fmtDate(last.date)}</p>}
+          {last && <p className="hint">Last done: {last.mileage != null ? fmtDistU(last.mileage) + " · " : ""}{fmtDate(last.date)}</p>}
 
           {mode === "log" && <LogForm item={item} vehicle={vehicle} onSave={onLog} onCancel={onClose} />}
           {mode === "interval" && <IntervalForm item={item} onSave={onSetInterval} onReset={(k) => onSetInterval(k, null)} onCancel={onClose} />}
@@ -129,7 +132,7 @@ function Row({ item, vehicle, est, open, mode, onOpen, onClose, onLog, onDeleteE
               {[...entries].sort((a, b) => (a.date < b.date ? 1 : -1)).map((e) => (
                 <div className="hist-row" key={e.id}>
                   <span>
-                    {fmtDate(e.date)}{e.mileage != null ? " · " + fmtNum(e.mileage) + " mi" : ""}{e.cost != null ? " · $" + e.cost : ""}
+                    {fmtDate(e.date)}{e.mileage != null ? " · " + fmtDistU(e.mileage) : ""}{e.cost != null ? " · $" + e.cost : ""}
                     {e.notes ? <em> — {e.notes}</em> : null}
                   </span>
                   <button className="link-btn danger" onClick={() => onDeleteEntry(item.key, e.id)} aria-label="Delete entry">✕</button>
@@ -146,13 +149,14 @@ function Row({ item, vehicle, est, open, mode, onOpen, onClose, onLog, onDeleteE
 function rangeText(subs, key, unit) {
   const vals = [...new Set(subs.map((x) => x[key]).filter(Boolean))].sort((a, b) => a - b);
   if (!vals.length) return "";
-  return (vals.length === 1 ? fmtNum(vals[0]) : fmtNum(vals[0]) + "\u2013" + fmtNum(vals[vals.length - 1])) + " " + unit;
+  const f = key === "miles" ? fmtInterval : fmtNum;
+  return (vals.length === 1 ? f(vals[0]) : f(vals[0]) + "\u2013" + f(vals[vals.length - 1])) + " " + unit;
 }
 
 // Tires, brake pads and similar: one row that opens into the individual parts.
 function GroupRow({ item, vehicle, est, onShop, open, onToggle, openKey, mode, allOpen, onAllOpen, onAllClose, onOpen, onClose, onLog, onLogAll, onDeleteEntry, onSetInterval }) {
   const gs = groupStatus(item, vehicle.log, vehicle.mileage, undefined, est);
-  const every = [rangeText(item.subs, "miles", "mi"), rangeText(item.subs, "months", "mo")].filter(Boolean).join(" / ");
+  const every = [rangeText(item.subs, "miles", distUnit()), rangeText(item.subs, "months", "mo")].filter(Boolean).join(" / ");
   return (
     <div className={"mrow " + gs.level}>
       <button className="mrow-head" onClick={onToggle} aria-expanded={open}>
@@ -168,7 +172,7 @@ function GroupRow({ item, vehicle, est, onShop, open, onToggle, openKey, mode, a
       )}
       {open && (
         <div className="mrow-body">
-          {item.note && <p className="hint" style={{ marginTop: 0 }}>{item.note}</p>}
+          {item.note && <p className="hint" style={{ marginTop: 0 }}>{localizeText(item.note)}</p>}
           {item.reason && <p className="hint tuned">Adjusted for your vehicle: {item.reason}</p>}
           {allOpen ? (
             <LogForm item={{ key: item.key + "-all" }} vehicle={vehicle} wholeSet={item.subs.length} onSave={(k, entry) => onLogAll(item, entry)} onCancel={onAllClose} />
@@ -191,7 +195,21 @@ function GroupRow({ item, vehicle, est, onShop, open, onToggle, openKey, mode, a
   );
 }
 
+// Typed in the chosen unit, stored in miles. Local text so typing never jumps around from rounding.
+function PerYear({ vehicle, onUpdate }) {
+  const [text, setText] = useState(vehicle.milesPerYear ? String(toDisp(vehicle.milesPerYear)) : "");
+  return (
+    <input id="mpy" inputMode="numeric" value={text} placeholder={distUnit() === "km" ? "e.g. 20000" : "e.g. 12000"}
+      onChange={(e) => {
+        const t = e.target.value.replace(/[^0-9]/g, "").slice(0, 6);
+        setText(t);
+        onUpdate(vehicle.id, { milesPerYear: t === "" ? "" : String(fromInput(t)) });
+      }} />
+  );
+}
+
 export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, goShopFor, saveDraft, premium, goPlans, canAdd = true }) {
+  useUnits();
   const [openKey, setOpenKey] = useState(null);
   const [openGroup, setOpenGroup] = useState(null);
   const [allGroup, setAllGroup] = useState(null);
@@ -249,7 +267,7 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, goSh
   function open(key, m) { setOpenKey(key); setMode(m); }
 
   function saveOdo() {
-    if (odo !== "") onUpdate(vehicle.id, { mileage: Number(odo) });
+    if (odo !== "") onUpdate(vehicle.id, { mileage: fromInput(odo) });
     setOdo("");
   }
 
@@ -305,10 +323,10 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, goSh
       <div className="maint-layout" hidden={pane !== "schedule"}>
         <aside className="maint-side">
       <div className="panel">
-        <label htmlFor="odo2">Current mileage</label>
+        <label htmlFor="odo2">Current {distWord() === "miles" ? "mileage" : "odometer"}</label>
         <div className="row">
           <input id="odo2" inputMode="numeric" value={odo}
-            placeholder={vehicle.mileage != null ? fmtNum(vehicle.mileage) + " mi" : "Enter miles"}
+            placeholder={vehicle.mileage != null ? fmtDistU(vehicle.mileage) : "Enter " + distWord()}
             onChange={(e) => setOdo(e.target.value.replace(/[^0-9]/g, "").slice(0, 7))}
             onKeyDown={(e) => e.key === "Enter" && saveOdo()} />
           <button className="btn-primary" onClick={saveOdo} disabled={odo === ""}>Update</button>
@@ -316,8 +334,8 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, goSh
         {vehicle.mileage == null && <p className="hint">Add your mileage so we can work out what's due.</p>}
         {est.estimated && (
           <p className="hint est-note">
-            Estimated today: about <strong>{fmtNum(est.miles)} mi</strong>, from your last entry of {fmtNum(vehicle.mileage)} mi
-            {est.daysOld ? " " + est.daysOld + " days ago" : ""} at about {fmtNum(est.perMonth)} mi a month
+            Estimated today: about <strong>{fmtDistU(est.miles)}</strong>, from your last entry of {fmtDistU(vehicle.mileage)}
+            {est.daysOld ? " " + est.daysOld + " days ago" : ""} at about {fmtDistU(est.perMonth)} a month
             {est.source === "setting" ? " (your estimate)" : ""}. Enter your real mileage any time to make it exact.
           </p>
         )}
@@ -326,9 +344,8 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, goSh
         )}
         {vehicle.mileage != null && est.source !== "readings" && (
           <div className="est-rate">
-            <label htmlFor="mpy">About how many miles a year do you drive? (optional)</label>
-            <input id="mpy" inputMode="numeric" value={vehicle.milesPerYear || ""} placeholder="e.g. 12000"
-              onChange={(e) => onUpdate(vehicle.id, { milesPerYear: e.target.value.replace(/[^0-9]/g, "").slice(0, 6) })} />
+            <label htmlFor="mpy">About how many {distWord()} a year do you drive? (optional)</label>
+            <PerYear vehicle={vehicle} onUpdate={onUpdate} />
             <p className="hint">Lets the app keep your mileage current between updates. Once you've entered a few readings it works this out by itself.</p>
           </div>
         )}

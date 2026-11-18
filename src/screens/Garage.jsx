@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { VehicleMini } from "../VehicleStage";
 import { getRecalls } from "../nhtsa";
-import { fmtNum } from "../maintenance";
+import { useUnits } from "../useUnits";
+import { toDisp, fromInput, fmtDistU, distWord } from "../units";
 
 function RecallPanel({ vehicle }) {
   const [state, setState] = useState({ status: "loading", items: [] });
@@ -51,7 +52,7 @@ function VehicleCard({ v, isActive, onSelect, onUpdate, onRemove, goMaintain, go
   const sub = [v.nickname ? [v.year, v.make, v.model].filter(Boolean).join(" ") : "", v.trim, v.engine && v.engine !== "Not reported for this VIN" ? v.engine : ""].filter(Boolean).join(" · ");
 
   function saveOdo() {
-    if (odo !== "") onUpdate(v.id, { mileage: Number(odo) });
+    if (odo !== "") onUpdate(v.id, { mileage: fromInput(odo) });
     setEditing(false);
     setOdo("");
   }
@@ -71,14 +72,14 @@ function VehicleCard({ v, isActive, onSelect, onUpdate, onRemove, goMaintain, go
         <span className="spec-label">Mileage</span>
         {editing ? (
           <span className="odo-edit">
-            <input inputMode="numeric" autoFocus value={odo} placeholder={v.mileage != null ? String(v.mileage) : "miles"}
+            <input inputMode="numeric" autoFocus value={odo} placeholder={v.mileage != null ? String(toDisp(v.mileage)) : distWord()}
               onChange={(e) => setOdo(e.target.value.replace(/[^0-9]/g, "").slice(0, 7))}
               onKeyDown={(e) => e.key === "Enter" && saveOdo()} />
             <button className="btn-small" onClick={saveOdo}>Save</button>
           </span>
         ) : (
           <span className="odo-view">
-            <strong>{v.mileage != null ? fmtNum(v.mileage) + " mi" : "Not set"}</strong>
+            <strong>{v.mileage != null ? fmtDistU(v.mileage) : "Not set"}</strong>
             <button className="link-btn" onClick={() => setEditing(true)}>Update</button>
           </span>
         )}
@@ -109,6 +110,7 @@ function VehicleCard({ v, isActive, onSelect, onUpdate, onRemove, goMaintain, go
 }
 
 export default function Garage({ vehicles, activeId, onSelect, onUpdate, onRemove, goIdentify, goMaintain, goShop, canAdd = true, goPlans }) {
+  useUnits();
   return (
     <>
       <p className="eyebrow">Garage</p>

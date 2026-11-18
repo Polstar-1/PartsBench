@@ -3,6 +3,7 @@
    These are common starting intervals, not factory schedules for
    every engine. The owner's manual wins; each interval is editable.
    ============================================================ */
+import { fmtDist, distUnit } from "./units.js";
 
 const ITEMS = [
   { key: "oil", label: "Engine oil & filter", miles: 5000, months: 6, noEv: true, note: "Use the oil grade and spec in your owner's manual. Some engines allow longer." },
@@ -221,7 +222,7 @@ export function getStatus(item, entries, mileage, today = new Date(), est = fals
 
   const bits = [];
   const tilde = est ? "~" : "";
-  if (milesLeft != null) bits.push(milesLeft < 0 ? tilde + fmtNum(-milesLeft) + " mi overdue" : tilde + fmtNum(milesLeft) + " mi left");
+  if (milesLeft != null) bits.push(milesLeft < 0 ? tilde + fmtDist(-milesLeft) + " " + distUnit() + " overdue" : tilde + fmtDist(milesLeft) + " " + distUnit() + " left");
   if (daysLeft != null) {
     if (daysLeft < 0) bits.push(-daysLeft + " days overdue");
     else if (daysLeft <= 60) bits.push(daysLeft + " days left");
