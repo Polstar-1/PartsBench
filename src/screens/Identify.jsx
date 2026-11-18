@@ -30,7 +30,7 @@ function SpecRow({ label, value, mono }) {
   );
 }
 
-export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, goGarage, canAdd = true, goPlans, full = true }) {
+export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, goGarage, canAdd = true, goPlans, full = true, signedIn = false, goSettings }) {
   useUnits();
   const [entryMode, setEntryMode] = useState("vin");
   const [vinValue, setVinValue] = useState("");
@@ -49,6 +49,11 @@ export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, g
   const [ymmError, setYmmError] = useState("");
 
   const [mileage, setMileage] = useState("");
+  // Guided steps: 1 vehicle, 2 mileage, 3 what to expect, 4 save. The step belongs to one vehicle, so a new lookup starts over.
+  const draftKey = draft ? [draft.vin, draft.year, draft.make, draft.model].join("|") : "";
+  const [stepState, setStepState] = useState({ key: "", step: 1 });
+  const step = stepState.key === draftKey ? stepState.step : 1;
+  const go = (n) => setStepState({ key: draftKey, step: n });
 
   useEffect(() => {
     let live = true;
@@ -132,6 +137,8 @@ export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, g
 
       <div className="identify-grid">
         <div className="id-form">
+          {(!showSpecs || savedMatch || step === 1) && (
+            <>
           <Segmented value={entryMode} onChange={setEntryMode} options={[
             { value: "vin", label: "VIN" },
             { value: "ymm", label: "Year / Make / Model" },
@@ -184,40 +191,80 @@ export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, g
               {ymmError && <p className="error-note">{ymmError}</p>}
             </div>
           )}
+            </>
+          )}
 
-          {showSpecs && (
+          {showSpecs && savedMatch && (
             <div className="panel">
-              {savedMatch ? (
+              <p className="saved-note"><span className="saved-check">✓</span> This vehicle is in your garage.</p>
+              <div className="row" style={{ marginTop: 12 }}>
+                <button className="btn-primary block" onClick={goGarage}>Open Garage</button>
+                <button className="btn-secondary" onClick={goShop}>Shop parts</button>
+              </div>
+            </div>
+          )}
+
+          {showSpecs && !savedMatch && (
+            <div className="panel step-panel">
+              <p className="step-count">Step {step} of 4<span className="step-dots" aria-hidden="true">{[1, 2, 3, 4].map((n) => <i key={n} className={n <= step ? "on" : ""} />)}</span></p>
+
+              {step === 1 && (
                 <>
-                  <p className="saved-note"><span className="saved-check">✓</span> This vehicle is in your garage.</p>
-                  <div className="row" style={{ marginTop: 12 }}>
-                    <button className="btn-primary block" onClick={goGarage}>Open Garage</button>
-                    <button className="btn-secondary" onClick={goShop}>Shop parts</button>
+                  <p className="step-title">Is this your vehicle?</p>
+                  <p className="hint" style={{ marginTop: 0 }}>Check the details, or look up a different one above.</p>
+                  <button className="btn-primary block" onClick={() => go(2)}>Yes, continue</button>
+                </>
+              )}
+
+              {step === 2 && (
+                <>
+                  <p className="step-title">{distWord() === "miles" ? "What's the mileage?" : "What's the odometer reading?"}</p>
+                  <label htmlFor="odo" className="sr-only">{distWord() === "miles" ? "Current mileage" : "Current odometer, km"}</label>
+                  <input id="odo" inputMode="numeric" autoFocus value={mileage} placeholder={distWord() === "miles" ? "e.g. 112000" : "e.g. 180000"}
+                    onChange={(e) => setMileage(e.target.value.replace(/[^0-9]/g, "").slice(0, 7))}
+                    onKeyDown={(e) => e.key === "Enter" && go(3)} />
+                  <p className="hint">A rough number is fine. It's used to work out what's likely due.</p>
+                  <div className="row">
+                    <button className="btn-primary block" onClick={() => go(3)}>{mileage ? "Continue" : "Skip for now"}</button>
+                    <button className="btn-secondary" onClick={() => go(1)}>Back</button>
                   </div>
                 </>
-              ) : (
+              )}
+
+              {step === 3 && (
                 <>
-                  <label htmlFor="odo">{distWord() === "miles" ? "Current mileage (optional)" : "Current odometer, km (optional)"}</label>
-                  <input id="odo" inputMode="numeric" value={mileage} placeholder={distWord() === "miles" ? "e.g. 112000" : "e.g. 180000"}
-                    onChange={(e) => setMileage(e.target.value.replace(/[^0-9]/g, "").slice(0, 7))} />
                   <DuePreview draft={draft} mileage={mileage} full={full} />
+                  <div className="row" style={{ marginTop: 14 }}>
+                    <button className="btn-primary block" onClick={() => go(4)}>Continue</button>
+                    <button className="btn-secondary" onClick={() => go(2)}>Back</button>
+                  </div>
+                </>
+              )}
+
+              {step === 4 && (
+                <>
+                  <p className="step-title">Save it to your Garage</p>
                   {canAdd ? (
                     <>
-                      <div className="row" style={{ marginTop: 12 }}>
+                      <p className="hint" style={{ marginTop: 0 }}>Saving lets you track maintenance and check recalls for this vehicle.</p>
+                      <div className="row">
                         <button className="btn-primary block" onClick={() => onSave(draft, mileage ? fromInput(mileage) : null)}>Save to Garage</button>
                         <button className="btn-secondary" onClick={goShop}>Shop parts</button>
                       </div>
-                      <p className="hint">Saving lets you track maintenance and check recalls for this vehicle.</p>
+                      {!signedIn && goSettings && (
+                        <p className="hint">It saves on this device. <button className="link-btn" onClick={goSettings}>Make a free account</button> to keep your garage on every device.</p>
+                      )}
                     </>
                   ) : (
                     <>
-                      <p className="info-note" role="note" style={{ marginTop: 12 }}>
+                      <p className="info-note" role="note" style={{ marginTop: 0 }}>
                         Your Garage is full. Free accounts hold two vehicles, and Premium has no limit.{" "}
                         <button className="link-btn" onClick={goPlans}>See Premium</button>
                       </p>
                       <div className="row"><button className="btn-secondary block" onClick={goShop}>Shop parts</button></div>
                     </>
                   )}
+                  <div className="row" style={{ marginTop: 10 }}><button className="btn-secondary" onClick={() => go(3)}>Back</button></div>
                 </>
               )}
             </div>

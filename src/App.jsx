@@ -154,7 +154,7 @@ export default function App() {
         )}
         {tab === "identify" && (
           <Identify draft={draft} savedMatch={savedMatch}
-            onDraft={setDraft} onSave={saveVehicle} canAdd={canAdd} full={premium === null || canUsePremium(premium)} goPlans={() => setTab("plans")}
+            onDraft={setDraft} onSave={saveVehicle} canAdd={canAdd} full={premium === null || canUsePremium(premium)} signedIn={Boolean(auth.user)} goSettings={() => setTab("settings")} goPlans={() => setTab("plans")}
             goShop={() => setTab("shop")} goGarage={() => setTab("garage")} />
         )}
         {tab === "garage" && (

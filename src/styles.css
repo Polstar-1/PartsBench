@@ -532,3 +532,13 @@ ul.upd-text li::before{ content:""; position:absolute; left:2px; top:0.62em; wid
 .due-tag{ margin-left:8px; font-family:var(--font-mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--orange); border:1px solid var(--orange); border-radius:4px; padding:1px 5px; }
 .due-every{ color:var(--ink-dim); font-size:12px; white-space:nowrap; font-family:var(--font-mono); }
 .recall-all > summary{ cursor:pointer; color:var(--blue); font-size:13px; margin:4px 0 8px; }
+
+/* guided steps (Identify) */
+.step-panel{ padding-top:16px; }
+.step-count{ display:flex; align-items:center; justify-content:space-between; margin:0 0 10px; font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); }
+.step-dots{ display:flex; gap:5px; }
+.step-dots i{ width:18px; height:4px; border-radius:2px; background:var(--border); display:block; }
+.step-dots i.on{ background:var(--orange); }
+.step-title{ margin:0 0 10px; font-size:20px; font-weight:600; color:var(--ink); }
+.step-panel .due-preview{ margin-top:0; padding-top:0; border-top:none; }
+.step-panel input#odo{ font-size:20px; padding:14px; }
