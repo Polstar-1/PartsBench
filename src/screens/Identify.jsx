@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import VehicleStage from "../VehicleStage";
+import DuePreview from "./DuePreview";
 import { useUnits } from "../useUnits";
 import { fromInput, distWord } from "../units";
 import { decodeVin, getModels, getMakes, FALLBACK_MAKES } from "../nhtsa";
@@ -29,7 +30,7 @@ function SpecRow({ label, value, mono }) {
   );
 }
 
-export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, goGarage, canAdd = true, goPlans }) {
+export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, goGarage, canAdd = true, goPlans, full = true }) {
   useUnits();
   const [entryMode, setEntryMode] = useState("vin");
   const [vinValue, setVinValue] = useState("");
@@ -199,6 +200,7 @@ export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, g
                   <label htmlFor="odo">{distWord() === "miles" ? "Current mileage (optional)" : "Current odometer, km (optional)"}</label>
                   <input id="odo" inputMode="numeric" value={mileage} placeholder={distWord() === "miles" ? "e.g. 112000" : "e.g. 180000"}
                     onChange={(e) => setMileage(e.target.value.replace(/[^0-9]/g, "").slice(0, 7))} />
+                  <DuePreview draft={draft} mileage={mileage} full={full} />
                   {canAdd ? (
                     <>
                       <div className="row" style={{ marginTop: 12 }}>

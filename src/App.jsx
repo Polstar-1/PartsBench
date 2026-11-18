@@ -12,7 +12,7 @@ import Plans from "./screens/Plans";
 import useAuth from "./useAuth";
 import useGarageSync from "./useGarageSync";
 import usePremium from "./usePremium";
-import { canAddVehicle } from "./premium";
+import { canAddVehicle, canUsePremium } from "./premium";
 import { loadGarage, saveGarage, newId } from "./storage";
 import { readDeepLink } from "./deeplink";
 import { withReading } from "./maintenance";
@@ -154,7 +154,7 @@ export default function App() {
         )}
         {tab === "identify" && (
           <Identify draft={draft} savedMatch={savedMatch}
-            onDraft={setDraft} onSave={saveVehicle} canAdd={canAdd} goPlans={() => setTab("plans")}
+            onDraft={setDraft} onSave={saveVehicle} canAdd={canAdd} full={premium === null || canUsePremium(premium)} goPlans={() => setTab("plans")}
             goShop={() => setTab("shop")} goGarage={() => setTab("garage")} />
         )}
         {tab === "garage" && (
