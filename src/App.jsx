@@ -13,6 +13,7 @@ import useAuth from "./useAuth";
 import useGarageSync from "./useGarageSync";
 import usePremium from "./usePremium";
 import { canAddVehicle, canUsePremium } from "./premium";
+import { requestSignInFocus } from "./signInIntent";
 import { loadGarage, saveGarage, newId } from "./storage";
 import { readDeepLink } from "./deeplink";
 import { withReading } from "./maintenance";
@@ -98,6 +99,7 @@ export default function App() {
     : banner;
 
   // Signed out, and accounts are switched on and finished loading: the moment to offer one.
+  const openSignIn = () => { requestSignInFocus(); setTab("settings"); };
   const canSignUp = auth.configured && auth.ready && !auth.user;
   const savedMatch = draft && draft.vin ? garage.vehicles.find((v) => v.vin === draft.vin) || null : null;
   const savedActive = garage.vehicles.find((v) => v.id === garage.activeId) || null;
@@ -152,16 +154,16 @@ export default function App() {
 
       <main className="content">
         {(tab === "identify" || tab === "garage" || tab === "maintain") && (
-          <AccountNotice auth={auth} tab={tab} hasVehicles={garage.vehicles.length > 0} goSettings={() => setTab("settings")} />
+          <AccountNotice auth={auth} tab={tab} hasVehicles={garage.vehicles.length > 0} goSettings={openSignIn} />
         )}
         {tab === "identify" && (
           <Identify draft={draft} savedMatch={savedMatch}
-            onDraft={setDraft} onSave={saveVehicle} canAdd={canAdd} full={premium === null || canUsePremium(premium)} canSignUp={canSignUp} goSettings={() => setTab("settings")} goPlans={() => setTab("plans")}
+            onDraft={setDraft} onSave={saveVehicle} canAdd={canAdd} full={premium === null || canUsePremium(premium)} canSignUp={canSignUp} goSettings={openSignIn} goPlans={() => setTab("plans")}
             goShop={() => setTab("shop")} goGarage={() => setTab("garage")} />
         )}
         {tab === "garage" && (
           <Garage vehicles={garage.vehicles} activeId={active && active.id} onSelect={selectVehicle}
-            onUpdate={updateVehicle} onRemove={removeVehicle} canAdd={canAdd} goPlans={() => setTab("plans")} canSignUp={canSignUp} goSettings={() => setTab("settings")}
+            onUpdate={updateVehicle} onRemove={removeVehicle} canAdd={canAdd} goPlans={() => setTab("plans")} canSignUp={canSignUp} goSettings={openSignIn}
             goIdentify={() => setTab("identify")} goMaintain={() => setTab("maintain")} goShop={() => setTab("shop")} />
         )}
         {tab === "maintain" && (
@@ -169,13 +171,13 @@ export default function App() {
             goGarage={() => setTab("garage")} goIdentify={() => setTab("identify")}
             goShopFor={(q) => { setShopQuery(q); setTab("shop"); }}
             saveDraft={() => saveVehicle(active, null)}
-            premium={premium} goPlans={() => setTab("plans")} canAdd={canAdd} canSignUp={canSignUp} goSettings={() => setTab("settings")} />
+            premium={premium} goPlans={() => setTab("plans")} canAdd={canAdd} canSignUp={canSignUp} goSettings={openSignIn} />
         )}
         {tab === "shop" && <Shop vehicle={active} goIdentify={() => setTab("identify")} initialQuery={shopQuery} onQueryUsed={clearShopQuery} />}
-        {tab === "ask" && <Ask vehicle={active} signedIn={!!auth.user} premium={premium} goSettings={() => setTab("settings")} goPlans={() => setTab("plans")} goShopFor={(q) => { setShopQuery(q); setTab("shop"); }} />}
-        {tab === "ideas" && <Ideas auth={auth} goSettings={() => setTab("settings")} />}
+        {tab === "ask" && <Ask vehicle={active} signedIn={!!auth.user} premium={premium} goSettings={openSignIn} goPlans={() => setTab("plans")} goShopFor={(q) => { setShopQuery(q); setTab("shop"); }} />}
+        {tab === "ideas" && <Ideas auth={auth} goSettings={openSignIn} />}
         {tab === "settings" && <Settings auth={accountAuth} sync={sync} premium={premium} goPlans={() => setTab("plans")} />}
-        {tab === "plans" && <Plans premium={premium} signedIn={!!auth.user} goSettings={() => setTab("settings")} banner={shownBanner} onDismissBanner={() => setBanner("")} />}
+        {tab === "plans" && <Plans premium={premium} signedIn={!!auth.user} goSettings={openSignIn} banner={shownBanner} onDismissBanner={() => setBanner("")} />}
       </main>
 
       <nav className="tabbar" aria-label="Main">

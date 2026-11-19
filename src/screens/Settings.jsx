@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Turnstile from "../Turnstile";
 import { SITE_KEY } from "../captcha";
 import Reminders from "./Reminders";
 import { useUnits } from "../useUnits";
 import { setUnits } from "../units";
+import { consumeSignInIntent } from "../signInIntent";
 
 function useCooldown() {
   const [secs, setSecs] = useState(0);
@@ -26,6 +27,13 @@ function SignIn({ auth }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [cool, setCool] = useCooldown();
+  const emailRef = useRef(null);
+  // Arriving from a "back up my garage" button: land on the email box, ready to type.
+  useEffect(() => {
+    if (!consumeSignInIntent()) return;
+    const el = emailRef.current;
+    if (el) { el.scrollIntoView({ block: "center" }); el.focus(); }
+  }, []);
   // Human check (only when a Turnstile key is set). Each token works once, so we ask for a new one after every send.
   const [token, setToken] = useState("");
   const [resetKey, setResetKey] = useState(0);
@@ -58,7 +66,7 @@ function SignIn({ auth }) {
       {step === "email" && (
         <form onSubmit={(e) => { e.preventDefault(); if (looksLikeEmail(email)) send(); }}>
           <label htmlFor="su-email">Email</label>
-          <input id="su-email" type="email" autoComplete="email" inputMode="email" placeholder="you@example.com"
+          <input id="su-email" ref={emailRef} type="email" autoComplete="email" inputMode="email" placeholder="you@example.com"
             value={email} onChange={(e) => setEmail(e.target.value)} />
           <label htmlFor="su-name" style={{ marginTop: 14 }}>Account name <span className="opt">(new accounts)</span></label>
           <input id="su-name" type="text" autoComplete="nickname" maxLength={30} placeholder="What should we call you?"
@@ -270,6 +278,7 @@ export default function Settings({ auth, sync, premium, goPlans }) {
           <p className="settings-hint" style={{ marginBottom: 14 }}>See what's included with Free and with Premium.</p>
           <button className="btn-secondary" onClick={goPlans}>{premium ? "Plan & billing" : "Compare plans"}</button>
         </div>
+        {auth.configured && auth.ready && !auth.user && <SignIn auth={auth} />}
         <UnitsPanel />
         {!auth.configured && (
           <div className="panel">
@@ -279,8 +288,6 @@ export default function Settings({ auth, sync, premium, goPlans }) {
         )}
 
         {auth.configured && !auth.ready && <div className="panel"><p className="settings-hint" style={{ margin: 0 }}>Loading…</p></div>}
-
-        {auth.configured && auth.ready && !auth.user && <SignIn auth={auth} />}
 
         {auth.configured && auth.ready && auth.user && (
           <>
