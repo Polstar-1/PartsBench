@@ -17,6 +17,8 @@ export default function AccountNotice({ auth, hasVehicles, tab, goSettings }) {
   }
 
   if (dismissed || !(hadAccount() || hasVehicles)) return null;
+  // Someone who has never had an account gets the "back up your garage" prompt on the Garage tab instead.
+  if (tab === "garage" && !hadAccount()) return null;
   return (
     <div className="signed-out-note" role="status">
       <span>You&rsquo;re signed out. Sign in to keep your garage.</span>

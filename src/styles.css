@@ -542,3 +542,8 @@ ul.upd-text li::before{ content:""; position:absolute; left:2px; top:0.62em; wid
 .step-title{ margin:0 0 10px; font-size:20px; font-weight:600; color:var(--ink); }
 .step-panel .due-preview{ margin-top:0; padding-top:0; border-top:none; }
 .step-panel input#odo{ font-size:20px; padding:14px; }
+
+/* back-up-your-garage nudge */
+.backup-nudge{ margin:0 0 16px; padding:12px 14px; background:var(--panel-2); border:1px solid var(--border); border-left:2px solid var(--blue); border-radius:6px; }
+.backup-nudge p{ margin:0 0 10px; font-size:13.5px; line-height:1.5; color:var(--ink-dim); }
+.backup-actions{ display:flex; align-items:center; gap:14px; }

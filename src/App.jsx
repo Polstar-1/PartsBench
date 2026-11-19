@@ -97,6 +97,8 @@ export default function App() {
     ? (premium ? "You're Premium now. Thank you for supporting Parts Bench!" : waited ? "Your payment went through, but Premium hasn't shown up yet. Please refresh the page. If it still isn't there after a few minutes, contact support." : banner)
     : banner;
 
+  // Signed out, and accounts are switched on and finished loading: the moment to offer one.
+  const canSignUp = auth.configured && auth.ready && !auth.user;
   const savedMatch = draft && draft.vin ? garage.vehicles.find((v) => v.vin === draft.vin) || null : null;
   const savedActive = garage.vehicles.find((v) => v.id === garage.activeId) || null;
   const active = savedMatch || draft || savedActive;
@@ -154,12 +156,12 @@ export default function App() {
         )}
         {tab === "identify" && (
           <Identify draft={draft} savedMatch={savedMatch}
-            onDraft={setDraft} onSave={saveVehicle} canAdd={canAdd} full={premium === null || canUsePremium(premium)} signedIn={Boolean(auth.user)} goSettings={() => setTab("settings")} goPlans={() => setTab("plans")}
+            onDraft={setDraft} onSave={saveVehicle} canAdd={canAdd} full={premium === null || canUsePremium(premium)} canSignUp={canSignUp} goSettings={() => setTab("settings")} goPlans={() => setTab("plans")}
             goShop={() => setTab("shop")} goGarage={() => setTab("garage")} />
         )}
         {tab === "garage" && (
           <Garage vehicles={garage.vehicles} activeId={active && active.id} onSelect={selectVehicle}
-            onUpdate={updateVehicle} onRemove={removeVehicle} canAdd={canAdd} goPlans={() => setTab("plans")}
+            onUpdate={updateVehicle} onRemove={removeVehicle} canAdd={canAdd} goPlans={() => setTab("plans")} canSignUp={canSignUp} goSettings={() => setTab("settings")}
             goIdentify={() => setTab("identify")} goMaintain={() => setTab("maintain")} goShop={() => setTab("shop")} />
         )}
         {tab === "maintain" && (
@@ -167,7 +169,7 @@ export default function App() {
             goGarage={() => setTab("garage")} goIdentify={() => setTab("identify")}
             goShopFor={(q) => { setShopQuery(q); setTab("shop"); }}
             saveDraft={() => saveVehicle(active, null)}
-            premium={premium} goPlans={() => setTab("plans")} canAdd={canAdd} />
+            premium={premium} goPlans={() => setTab("plans")} canAdd={canAdd} canSignUp={canSignUp} goSettings={() => setTab("settings")} />
         )}
         {tab === "shop" && <Shop vehicle={active} goIdentify={() => setTab("identify")} initialQuery={shopQuery} onQueryUsed={clearShopQuery} />}
         {tab === "ask" && <Ask vehicle={active} signedIn={!!auth.user} premium={premium} goSettings={() => setTab("settings")} goPlans={() => setTab("plans")} goShopFor={(q) => { setShopQuery(q); setTab("shop"); }} />}

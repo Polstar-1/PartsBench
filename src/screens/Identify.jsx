@@ -30,7 +30,7 @@ function SpecRow({ label, value, mono }) {
   );
 }
 
-export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, goGarage, canAdd = true, goPlans, full = true, signedIn = false, goSettings }) {
+export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, goGarage, canAdd = true, goPlans, full = true, canSignUp = false, goSettings }) {
   useUnits();
   const [entryMode, setEntryMode] = useState("vin");
   const [vinValue, setVinValue] = useState("");
@@ -251,7 +251,7 @@ export default function Identify({ draft, savedMatch, onDraft, onSave, goShop, g
                         <button className="btn-primary block" onClick={() => onSave(draft, mileage ? fromInput(mileage) : null)}>Save to Garage</button>
                         <button className="btn-secondary" onClick={goShop}>Shop parts</button>
                       </div>
-                      {!signedIn && goSettings && (
+                      {canSignUp && goSettings && (
                         <p className="hint">It saves on this device. <button className="link-btn" onClick={goSettings}>Make a free account</button> to keep your garage on every device.</p>
                       )}
                     </>

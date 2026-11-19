@@ -2,6 +2,7 @@ import { useState } from "react";
 import { canUsePremium } from "../premium";
 import History from "./History";
 import { useUnits } from "../useUnits";
+import BackupNudge from "../BackupNudge";
 import { toDisp, fromInput, fmtDistU, fmtInterval, niceInterval, distUnit, distWord, localizeText } from "../units";
 import { planFor, getStatus, groupStatus, splitCost, latestEntry, todayISO, fmtDate, fmtNum, estimateMiles, manualLink, LEVEL_RANK } from "../maintenance";
 
@@ -208,7 +209,7 @@ function PerYear({ vehicle, onUpdate }) {
   );
 }
 
-export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, goShopFor, saveDraft, premium, goPlans, canAdd = true }) {
+export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, goShopFor, saveDraft, premium, goPlans, canAdd = true, canSignUp = false, goSettings }) {
   useUnits();
   const [openKey, setOpenKey] = useState(null);
   const [openGroup, setOpenGroup] = useState(null);
@@ -312,6 +313,8 @@ export default function Maintain({ vehicle, onUpdate, goGarage, goIdentify, goSh
       <p className="eyebrow">Maintenance</p>
       <h1 className="page-title">{name}</h1>
       <p className="page-sub">{pane === "history" ? "What you've logged and spent on this vehicle." : "Tap an item to log a service or change its interval."}</p>
+
+      <BackupNudge variant="logged" show={canSignUp && Object.values(vehicle.log || {}).some((l) => l && l.length)} goSettings={goSettings} />
 
       <div className="segmented maint-views" role="tablist" aria-label="Maintenance views" style={{ maxWidth: 420, marginBottom: 16 }}>
         <button role="tab" aria-selected={pane === "schedule"} className={"seg-btn" + (pane === "schedule" ? " active" : "")} onClick={() => setPane("schedule")}>Schedule</button>

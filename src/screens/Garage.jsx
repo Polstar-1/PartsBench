@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { VehicleMini } from "../VehicleStage";
 import RecallPanel from "../RecallPanel";
+import BackupNudge from "../BackupNudge";
 import { useUnits } from "../useUnits";
 import { toDisp, fromInput, fmtDistU, distWord } from "../units";
 
@@ -71,13 +72,15 @@ function VehicleCard({ v, isActive, onSelect, onUpdate, onRemove, goMaintain, go
   );
 }
 
-export default function Garage({ vehicles, activeId, onSelect, onUpdate, onRemove, goIdentify, goMaintain, goShop, canAdd = true, goPlans }) {
+export default function Garage({ vehicles, activeId, onSelect, onUpdate, onRemove, goIdentify, goMaintain, goShop, canAdd = true, goPlans, canSignUp = false, goSettings }) {
   useUnits();
   return (
     <>
       <p className="eyebrow">Garage</p>
       <h1 className="page-title">Your garage.</h1>
       <p className="page-sub">Everything you own in one place. Saved on this device.</p>
+
+      <BackupNudge variant="saved" show={canSignUp && vehicles.length > 0} goSettings={goSettings} />
 
       {!vehicles.length && (
         <div className="empty-state">
