@@ -51,10 +51,10 @@ function breadcrumbLd(items) {
 const crumbs = (items) =>
   `<p class="crumbs">${items.map((it, i) => (i === items.length - 1 ? esc(it.name) : `<a href="${esc(it.path)}">${esc(it.name)}</a>`)).join(" &rsaquo; ")}</p>`;
 
-const storeLinks = (query) =>
-  `<ul class="stores">${buildLinks(query).map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="sponsored nofollow noopener">${esc(l.name)}</a></li>`).join("")}</ul>`;
+const storeLinks = (query, vehicle) =>
+  `<ul class="stores">${buildLinks(query, vehicle).map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="sponsored nofollow noopener">${esc(l.name)}</a></li>`).join("")}</ul>`;
 
-const DISCLOSE = `<p class="small">Links to eBay and other stores are affiliate links. We may earn a commission if you buy, at no extra cost to you. Parts Bench is not a store and does not sell parts. Always confirm fitment with the seller before you buy.</p>`;
+const DISCLOSE = `<p class="small">Links to eBay, Amazon and other stores are affiliate links. We may earn a commission if you buy, at no extra cost to you. As an Amazon Associate we earn from qualifying purchases. Parts Bench is not a store and does not sell parts. Always confirm fitment with the seller before you buy.</p>`;
 
 /* ----------------------------------------------------------------- pages */
 
@@ -144,6 +144,7 @@ function partPage(v, part) {
 ${crumbs([{ name: "Parts Bench", path: "/" }, { name: "Parts", path: "/parts" }, { name: v.name, path: v.path }, { name: part.label, path: v.path + "/" + part.slug }])}
 <h1>${esc(v.name)} ${esc(part.label)}</h1>
 <p class="lead">${esc(what)}</p>
+${part.quick ? `<div class="quick"><strong>Quick answer</strong><p>${esc(part.quick.replace(/\{v\}/g, v.name))}</p></div>` : ""}
 <a class="cta" href="${esc(appLink(v, part))}">Compare ${esc(part.label.toLowerCase())} for your ${esc(v.model)} in the app</a>
 
 <h2>Signs it may need replacing</h2>
@@ -164,7 +165,7 @@ ${maint ? `<tr><th>Related service</th><td>${esc(maint.label)}: ${esc(intervalTe
 
 <h2>Where to buy a ${esc(v.name)} ${esc(part.label.toLowerCase())}</h2>
 <p>These searches are set up for your vehicle and the part.</p>
-${storeLinks(query)}
+${storeLinks(query, v)}
 ${DISCLOSE}
 
 <h2>Related ${esc(v.model)} parts</h2>

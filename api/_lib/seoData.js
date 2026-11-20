@@ -57,12 +57,17 @@ export const yearsOf = (v) => Array.from({ length: v.to - v.from + 1 }, (_, i) =
    maint  optional key from src/maintenance.js, to show the related service interval.
    top    included in the sitemap (the rest are still linked from each vehicle page). */
 
-// Part pages go in the sitemap only for the newest model years of each vehicle, where the searches are.
-export const SITEMAP_PART_YEARS = 12;
+// Part pages go in the sitemap only for the model years where people actually search for repairs: cars that are
+// out of warranty and being fixed, not the newest ones. (Search Console showed clicks on 2012-2021 vehicles.)
+// Every other part page still exists and is linked from its vehicle page.
+export const SITEMAP_PART_FROM = 2004;
+export const SITEMAP_PART_TO = 2019;
+export const inPartWindow = (year) => year >= SITEMAP_PART_FROM && year <= SITEMAP_PART_TO;
 const P = (label, o) => ({ label, slug: slugify(label), ...o });
 
 export const CORE_PARTS = [
   P("Front Brake Pads", { top: true, maint: "brake-inspect",
+    quick: "Replace the front brake pads when the pad material is about 3 mm (1/8 inch) thick or less, or sooner if they squeal, grind or the brake warning light comes on. Fronts wear faster than rears. Always replace both sides together, and have the rotors checked at the same time.",
     what: "Front brake pads press against the rotors to slow your {v}. The front brakes do most of the stopping, so the front pads usually wear out before the rears.",
     signs: ["Squealing or grinding when you brake", "A longer pedal travel or a brake warning light", "Pad material thinner than about 3 mm (1/8 inch) when checked through the wheel or with the wheel off"],
     life: "Commonly 30,000 to 70,000 miles, depending on driving and pad material.", diff: "Intermediate", diffNote: "Needs a jack, jack stands and a caliper tool or C-clamp.",
@@ -95,7 +100,7 @@ export const CORE_PARTS = [
   P("Spark Plugs", { top: true, maint: "plugs",
     what: "Spark plugs ignite the air and fuel mixture in each cylinder of your {v}. Worn plugs make the engine run less smoothly and use more fuel.",
     signs: ["Rough idle or hesitation", "Hard starting or misfires", "Worse fuel economy or a check-engine light for misfires"],
-    life: "Copper plugs often need changing around 20,000 to 30,000 miles. Iridium or platinum plugs commonly last 60,000 to 100,000 miles.", diff: "Beginner to Intermediate", diffNote: "On some engines the plugs sit under the intake or coil packs, which adds time.",
+    life: "Copper plugs often need changing around 20,000 to 30,000 miles. Iridium or platinum plugs commonly last 60,000 to 100,000 miles, with the longest-life ones near the top of that range.", diff: "Beginner to Intermediate", diffNote: "On some engines the plugs sit under the intake or coil packs, which adds time.",
     tip: "Use the plug type and gap listed in your owner's manual, and replace the full set at once." }),
   P("Ignition Coils", {
     what: "Ignition coils turn the battery's low voltage into the high voltage a spark plug needs. Many engines have one coil per cylinder.",
@@ -103,6 +108,7 @@ export const CORE_PARTS = [
     life: "Often 80,000 to 100,000 miles or more.", diff: "Beginner", diffNote: "Usually held by a single bolt and a connector on each coil.",
     tip: "A misfire on one cylinder points to that cylinder's coil or plug. Many people change the plugs at the same time." }),
   P("Starter Motor", { top: true,
+    quick: "If the engine only clicks or does not crank while the battery is good and the cable connections are clean and tight, the starter is the likely cause. Check the battery first, because a weak battery causes the same symptoms. Starters differ by engine and transmission, so match yours by VIN.",
     what: "The starter turns the engine over to begin running. A weak starter can leave you stranded even with a good battery.",
     signs: ["A click but no cranking", "Slow cranking after the battery has been tested", "Grinding noises when starting"],
     life: "Often 100,000 miles or more.", diff: "Intermediate", diffNote: "Usually accessed from underneath and held by two or three bolts.",
@@ -113,6 +119,7 @@ export const CORE_PARTS = [
     life: "Often 100,000 to 150,000 miles.", diff: "Intermediate", diffNote: "Disconnect the battery first. Access varies a lot between engines.",
     tip: "Have the battery and alternator tested before buying; a bad battery is often mistaken for a bad alternator. Remanufactured units are common." }),
   P("Car Battery", { top: true, maint: "battery",
+    quick: "The battery size, called the group size (for example Group 35 or 24F), is printed on the label of the battery now in your {v} and listed in the owner's manual. It varies by engine and trim, so check yours before you buy, or ask a parts store to look it up by VIN. Match the group size, the terminal positions, and at least the cold-cranking amps the manual calls for.",
     what: "The battery starts your {v} and supports the electrical system. Heat and short trips shorten its life.",
     signs: ["Slow cranking or clicking", "Dim lights, or a battery warning light", "A case that is swollen, leaking or heavily corroded, or a battery older than about 4 years"],
     life: "Commonly 3 to 5 years.", diff: "Beginner", diffNote: "Basic wrenches. Some cars need the radio or windows relearned afterward.",
@@ -187,7 +194,8 @@ export const CORE_PARTS = [
     signs: ["A check-engine light with codes such as P0420 or P0430", "A rattling sound, a sulfur smell, or a failed emissions test", "Loss of power"],
     life: "Often 100,000 miles or more and can last the life of the vehicle.", diff: "Advanced", diffNote: "Bolts and pipes are often rusted, and fitment is exact.",
     tip: "Emissions rules differ by state, and some states require a specific type. Fix the cause of the failure, such as misfires or burning oil, or the new one can fail too." }),
-  P("Upstream Oxygen Sensor", {
+  P("Upstream Oxygen Sensor", { top: true,
+    quick: "The upstream oxygen sensor (also called sensor 1) sits before the catalytic converter and helps the computer set the air and fuel mixture. The downstream sensor (sensor 2) sits after it and checks the converter. Engines with two exhaust banks, like most V6 and V8s, have one upstream sensor on each bank. The trouble code tells you which one: Bank 1 is the side with cylinder 1.",
     what: "The upstream oxygen sensor measures the exhaust ahead of the catalytic converter so the computer can balance the air and fuel mixture.",
     signs: ["A check-engine light", "Worse fuel economy or a rough idle", "A failed emissions test"],
     life: "Often 60,000 to 100,000 miles.", diff: "Intermediate", diffNote: "An oxygen sensor socket helps; sensors often stick in the exhaust.",
